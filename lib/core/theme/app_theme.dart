@@ -32,8 +32,8 @@ class AppTheme {
     brightness: Brightness.light,
     appBarTheme: AppBarTheme(
       systemOverlayStyle: lightSystemUiOverlayStyle,
-      iconTheme: IconThemeData(color: AppColors.iconColor),
-      backgroundColor: AppColors.primary100,
+      iconTheme: IconThemeData(color: AppColors.primaryColor),
+      backgroundColor: AppColors.primaryColor,
     ),
 
     primaryColor: AppColors.primaryColor,

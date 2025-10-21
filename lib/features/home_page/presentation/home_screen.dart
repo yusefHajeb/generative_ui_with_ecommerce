@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:generative_ui_with_ecommerce/core/theme/app_color.dart';
-import 'package:generative_ui_with_ecommerce/core/widgets/bottom_navigation_bar.dart';
 import 'package:generative_ui_with_ecommerce/core/widgets/chip_button.dart';
 import 'package:generative_ui_with_ecommerce/core/widgets/icon_widget.dart';
-import 'package:generative_ui_with_ecommerce/core/widgets/row_icons.dart'; // IconGroup widget
+import 'package:generative_ui_with_ecommerce/core/widgets/row_icons.dart';
+import 'package:generative_ui_with_ecommerce/features/home_page/presentation/widgets/status.dart'; // IconGroup widget
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -11,10 +11,6 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-        child: ButtomNavigationBar(),
-      ),
       appBar: AppBar(title: const Text('Home')),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 19),
@@ -22,6 +18,7 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
+            StatusWidget(),
             IconWidget(isHaveBackgroundColor: true, icon: Icon(Icons.home)),
             const Center(child: Text('مرحبا بك في الصفحه الرئيسية!')),
             TextFormField(decoration: const InputDecoration(hintText: 'ادخل نصا هنا')),
