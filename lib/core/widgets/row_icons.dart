@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'liquid_glass_widget.dart';
+
 class IconGroup extends StatelessWidget {
   final List<Widget> icons;
 
@@ -13,7 +15,6 @@ class IconGroup extends StatelessWidget {
   static const double _defaultSpacing = 8.0;
   static const double _containerPadding = 6.0;
   static const double _borderRadius = 30.0;
-  static const double _backgroundOpacity = 0.6;
 
   const IconGroup({
     super.key,
@@ -27,17 +28,24 @@ class IconGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      padding: const EdgeInsets.all(_containerPadding),
-      decoration: ShapeDecoration(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_borderRadius)),
-        color:
-            backgrounndColor ?? ((Colors.grey[200] ?? Colors.grey)).withOpacity(_backgroundOpacity),
-      ),
-      child: isVertical
-          ? _VerticalIconList(icons: icons, spaceBetween: spaceBetween)
-          : _HorizontalIconList(icons: icons, spaceBetween: spaceBetween),
+    return Stack(
+      children: [
+        LiquidGlassWidget(
+          child: Container(
+            height: height,
+            padding: const EdgeInsets.all(_containerPadding),
+            decoration: ShapeDecoration(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_borderRadius)),
+              color: Colors.transparent,
+              // color:
+              //     backgrounndColor ?? ((Colors.grey[200] ?? Colors.grey)).withOpacity(_backgroundOpacity),
+            ),
+            child: isVertical
+                ? _VerticalIconList(icons: icons, spaceBetween: spaceBetween)
+                : _HorizontalIconList(icons: icons, spaceBetween: spaceBetween),
+          ),
+        ),
+      ],
     );
   }
 }
