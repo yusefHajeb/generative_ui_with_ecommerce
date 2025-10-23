@@ -11,7 +11,7 @@ class LiquidGlassWidget extends StatelessWidget {
   const LiquidGlassWidget({
     super.key,
     required this.child,
-    this.borderRadius = 20.0,
+    this.borderRadius = 30.0,
     this.padding = EdgeInsets.zero,
     this.glassColor,
     this.glowRadius = 2.0,

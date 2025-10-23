@@ -27,7 +27,7 @@ class _ButtomNavigationBarState extends ConsumerState<ButtomNavigationBar> {
     IconButtomNavigationItem(icon: Icons.settings, label: 'الإعدادات'),
   ];
 
-  static const double _iconSize = 28.0;
+  static const double _iconSize = 26.0;
   static const double _selectedPaddingH = 25.0;
   static const double _unselectedPaddingH = 20.0;
   static const double _spaceBetween = 19.0;
@@ -39,7 +39,7 @@ class _ButtomNavigationBarState extends ConsumerState<ButtomNavigationBar> {
 
   /// Calculates the width of an icon container based on selection state
   double _getIconWidth(bool isSelected) {
-    return (isSelected ? _selectedPaddingH : _unselectedPaddingH) * 2 + _iconSize + 8;
+    return (isSelected ? _selectedPaddingH : _unselectedPaddingH) * 2 + _iconSize + 10;
   }
 
   /// Calculates the left position for the sliding background
@@ -89,19 +89,22 @@ class _ButtomNavigationBarState extends ConsumerState<ButtomNavigationBar> {
               ),
             ),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(_icons.length, (index) {
-              final isSelected = selectedIndex == index;
-              return Padding(
-                padding: EdgeInsets.only(right: index != _icons.length - 1 ? _spaceBetween : 0),
-                child: _buildNavigationIcon(
-                  buttomItem: _icons[index],
-                  index: index,
-                  isSelected: isSelected,
-                ),
-              );
-            }),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(_icons.length, (index) {
+                final isSelected = selectedIndex == index;
+                return Padding(
+                  padding: EdgeInsets.only(right: index != _icons.length - 1 ? 19 : 0),
+                  child: _buildNavigationIcon(
+                    buttomItem: _icons[index],
+                    index: index,
+                    isSelected: isSelected,
+                  ),
+                );
+              }),
+            ),
           ),
         ],
       ),
@@ -126,7 +129,7 @@ class _ButtomNavigationBarState extends ConsumerState<ButtomNavigationBar> {
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: isSelected ? _selectedPaddingH : _unselectedPaddingH,
-          vertical: 1,
+          vertical: 3,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -139,10 +142,12 @@ class _ButtomNavigationBarState extends ConsumerState<ButtomNavigationBar> {
               color: isEndedAnimation & isSelected ? AppColors.primary200 : Colors.grey[700],
             ),
             SizedBox(
-              width: 36,
+              width: 37,
+              height: 17,
               child: Text(
                 buttomItem.label,
                 style: context.textTheme.bodySmall?.copyWith(
+                  wordSpacing: 0.4,
                   color: isEndedAnimation & isSelected ? AppColors.primary200 : Colors.grey[700],
                 ),
               ),
