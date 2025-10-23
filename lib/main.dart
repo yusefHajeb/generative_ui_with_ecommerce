@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:generative_ui_with_ecommerce/core/provider/theme_provider.dart';
+import 'package:generative_ui_with_ecommerce/core/providers/theme_provider.dart';
 import 'package:generative_ui_with_ecommerce/core/routes/app_router.dart';
 import 'package:generative_ui_with_ecommerce/core/theme/app_theme.dart';
 
