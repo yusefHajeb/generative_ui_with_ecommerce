@@ -1,16 +1,20 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:generative_ui_with_ecommerce/core/network/api_client.dart';
+import 'package:generative_ui_with_ecommerce/core/network/network_service.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/services/tool_convert.dart'
     show Tool, ToolFunction, convertToolsToGemini;
 import 'package:http/http.dart' as http;
-
-import '../../../core/data/hardcoded_data.dart';
+import '../../../features/products/data/models/product.dart';
+import '../data/models/ai_response.dart';
+import '../data/models/search_result_model.dart';
 
 // import 'tool_convert.dart';
 typedef MCPToolCallingService = GeminiMCPService;
 
-class GeminiMCPService {
+class GeminiMCPService extends NetworkService {
   static const String apiKey = '';
   static const String defaultModel = 'gemini-2.0-flash';
   static const String baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
@@ -22,11 +26,11 @@ class GeminiMCPService {
   final List<Map<String, String>> _conversationPairs = [];
   // late final UserBehaviorService _behaviorService;
 
-  GeminiMCPService() {
+  GeminiMCPService(super.apiClient) {
     // _behaviorService = UserBehaviorService();
   }
 
-  Future<Map<String, dynamic>> processToolCallingRequest(String userInput) async {
+  Future<AiResponse> processToolCallingRequest(String userInput) async {
     try {
       debugPrint('[INPUT] USER INPUT: "$userInput"');
 
@@ -45,30 +49,25 @@ class GeminiMCPService {
         'tools': tools,
         'generationConfig': {'temperature': 0.1, 'topP': 0.9, 'topK': 40},
       };
-
-      final url = Uri.parse('$baseUrl/models/$defaultModel:generateContent');
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json', 'x-goog-api-key': apiKey},
-        body: jsonEncode(requestBody),
+      final response = await apiClient.safeApiCall(
+        httpMethod: HttpMethod.post,
+        endPoint: '$baseUrl/models/$defaultModel:generateContent',
+        data: requestBody,
+        options: Options(headers: {'Content-Type': 'application/json', 'x-goog-api-key': apiKey}),
       );
-      log('response ai : ${response.body.toString()}');
 
       if (response.statusCode != 200) {
-        debugPrint('[ERROR] Gemini API Error: ${response.statusCode}');
-        debugPrint('[ERROR] Response: ${response.body}');
-        return {
-          'type': 'error',
-          'message': 'Sorry, I encountered an error communicating with Gemini API',
-        };
+        return ErrorResponse(
+          message: 'Sorry, I encountered an error communicating with Gemini API',
+        );
       }
 
-      final responseData = jsonDecode(response.body);
+      final responseData = response.data;
       debugPrint('[OK] GEMINI RESPONSE RECEIVED');
 
       final candidates = responseData['candidates'] as List?;
       if (candidates == null || candidates.isEmpty) {
-        return {'type': 'text', 'message': 'I couldn\'t process that request. Please try again.'};
+        return TextResponse(message: 'I couldn\'t process that request. Please try again.');
       }
 
       final candidate = candidates.first;
@@ -86,32 +85,23 @@ class GeminiMCPService {
 
           final toolResult = await _executeToolCall(functionName, args, userInput);
           log('tool results ');
-          log(toolResult.toString());
+          log(toolResult.data.toString());
+          log(toolResult.message.toString());
+          log(toolResult.type);
+
           // await _behaviorService.trackInteraction(
           //   action: 'ai_tool_$functionName',
           //   context: {'tool': functionName, 'arguments': args, 'userInput': userInput},
-          // );`
+          // );
 
           // For e-commerce, we'll use structured data instead of HTML
-          if (toolResult['data'] != null) {
-            final result = {
-              'type': 'tool_call',
-              'tool': functionName,
-              'arguments': args,
-              'message': toolResult['message'],
-              'data': toolResult['data'],
-            };
-
-            return result;
+          if (toolResult.data != null) {
+            return toolResult;
           }
-
-          return {
-            'type': 'tool_call',
-            'tool': functionName,
-            'arguments': args,
-            'message': toolResult['message'],
-            'data': toolResult['data'],
-          };
+          if (toolResult is ErrorResponse) {
+            log('errors toolResults${toolResult.data.toString()}  ${toolResult.type} ');
+          }
+          return toolResult;
         }
       }
 
@@ -138,11 +128,11 @@ class GeminiMCPService {
       //   action: 'ai_text_response',
       //   context: {'responseLength': textMessage.length, 'userInput': userInput},
       // );
-
-      return {'type': 'text', 'message': textMessage};
+      log('---------------------');
+      return TextResponse(message: textMessage);
     } catch (e) {
       debugPrint('[ERROR] MCP TOOL CALLING ERROR: $e');
-      return {'type': 'error', 'message': 'Sorry, I encountered an error: $e'};
+      return ErrorResponse(message: 'Sorry, I encountered an error: $e');
     }
   }
 
@@ -357,22 +347,22 @@ class GeminiMCPService {
   }
 
   // TOOL EXECUTION
-  Future<Map<String, dynamic>> _executeToolCall(
+  Future<AiResponse> _executeToolCall(
     String toolName,
     Map<String, dynamic> arguments,
     String userInput,
   ) async {
     switch (toolName) {
       case 'search_products':
-        return _searchProducts(arguments);
+        return await _searchProducts(arguments);
       case 'get_categories':
-        return _getCategories(arguments);
+        return await _getCategories(arguments);
       case 'get_product_details':
-        return _getProductDetails(arguments);
+        return await _getProductDetails(arguments);
       case 'manage_cart':
         return _manageCart(arguments);
       case 'get_recommendations':
-        return _getRecommendations(arguments);
+        return await _getRecommendations(arguments);
       case 'navigate_to_page':
         return _navigateToPage(arguments);
       case 'change_theme':
@@ -380,29 +370,26 @@ class GeminiMCPService {
       case 'get_knowledge':
         return _getKnowledge(arguments);
       default:
-        return {'message': 'Action completed', 'data': null};
+        return TextResponse(message: 'Action completed');
     }
   }
 
   // PRODUCT SEARCH IMPLEMENTATION
-  Future<Map<String, dynamic>> _searchProducts(Map<String, dynamic> arguments) async {
+  Future<AiResponse> _searchProducts(Map<String, dynamic> arguments) async {
     try {
       debugPrint('[PRODUCT_SEARCH] Starting product search with: $arguments');
 
       final String apiUrl = _buildSearchUrl(arguments);
       debugPrint('[PRODUCT_SEARCH] API URL: $apiUrl');
 
-      final response = await http.get(Uri.parse(apiUrl));
+      // final response = await http.get(Uri.parse(apiUrl));
+      final response = await apiClient.safeApiCall(
+        endPoint: apiUrl,
+        queryParameters: arguments,
+        httpMethod: HttpMethod.get,
+      );
 
-      if (response.statusCode != 200) {
-        debugPrint('[PRODUCT_SEARCH] API Error: ${response.statusCode}');
-        return {
-          'message': 'Sorry, I encountered an error searching products. Please try again.',
-          'data': null,
-        };
-      }
-
-      final data = jsonDecode(response.body);
+      final data = response.data;
       final products = data['products'] as List? ?? [];
       final total = data['total'] as int? ?? products.length;
 
@@ -419,35 +406,39 @@ class GeminiMCPService {
       } else {
         message = 'Found $total products matching your search:';
       }
-      log(enhancedProducts.map((e) => e).toString());
-      return {
-        'message': message,
-        'data': {
-          'type': 'product_grid',
-          'content': {
-            'products': enhancedProducts,
-            'totalResults': total,
-            'hasMore': total > enhancedProducts.length,
-            'searchCriteria': arguments,
-          },
-        },
-      };
+      // log(enhancedProducts.map((e) => e).toString());
+
+      final searchCriteria = SearchCriteria.fromJson(arguments);
+      final productGridData = ProductGridData(
+        products: enhancedProducts.map((p) => Product.fromJson(p)).toList(),
+        totalResults: total,
+        hasMore: total > enhancedProducts.length,
+        searchCriteria: searchCriteria,
+      );
+
+      return ToolCallResponse(
+        tool: 'search_products',
+
+        arguments: arguments,
+        message: message,
+        data: {'type': 'product_grid', 'content': productGridData.toJson()},
+      );
     } catch (e) {
       debugPrint('[PRODUCT_SEARCH] Error: $e');
-      return {'message': 'Sorry, I encountered an error while searching products.', 'data': null};
+      return ErrorResponse(message: 'Sorry, I encountered an error while searching products.');
     }
   }
 
   String _buildSearchUrl(Map<String, dynamic> args) {
     // Use DummyJSON for advanced searches with queries
     if (args['query'] != null) {
-      return '$dummyJsonApi/products/search?q=${Uri.encodeComponent(args['query'])}&limit=${args['limit'] ?? 20}';
+      return '/products/search?q=${Uri.encodeComponent(args['query'])}&limit=${args['limit'] ?? 20}';
     }
 
     // Use DummyJSON for category searches
     if (args['category'] != null) {
       final category = _mapCategoryToApi(args['category'] as String);
-      return '$dummyJsonApi/products/category/$category?limit=${args['limit'] ?? 20}';
+      return '/products/category/$category?limit=${args['limit'] ?? 20}';
     }
 
     // Use DummyJSON for all products with filters
@@ -458,13 +449,15 @@ class GeminiMCPService {
     if (args['maxPrice'] != null) params.add('maxPrice=${args['maxPrice']}');
     if (args['minRating'] != null) params.add('minRating=${args['minRating']}');
     if (args['brand'] != null) params.add('brand=${Uri.encodeComponent(args['brand'])}');
+    log('test argument for search product');
+    log(args.toString());
 
     if (params.length > 1) {
-      return '$dummyJsonApi/products?${params.join('&')}';
+      return '/products?${params.join('&')}';
     }
 
     // Default: get all products from DummyJSON
-    return '$dummyJsonApi/products?limit=20';
+    return '/products?limit=20';
   }
 
   String _mapCategoryToApi(String userCategory) {
@@ -530,7 +523,7 @@ class GeminiMCPService {
   }
 
   // CATEGORIES IMPLEMENTATION
-  Future<Map<String, dynamic>> _getCategories(Map<String, dynamic> arguments) async {
+  Future<AiResponse> _getCategories(Map<String, dynamic> arguments) async {
     try {
       debugPrint('[CATEGORIES] Fetching categories');
 
@@ -546,17 +539,16 @@ class GeminiMCPService {
           if (arguments['showProducts'] == true) {
             sampleProducts = await _getSampleProductsForCategories(categories);
           }
-          return {
-            'message': 'Here are our product categories:',
-            'data': {
-              'type': 'categories',
-              'content': {
-                'categories': categories,
-                'sampleProducts': sampleProducts,
-                'total': categories.length,
-              },
+          return ToolCallResponse(
+            tool: 'get_categories',
+            arguments: arguments,
+            message: 'Here are our product categories:',
+            data: {
+              'categories': categories,
+              'sampleProducts': sampleProducts,
+              'total': categories.length,
             },
-          };
+          );
         }
         throw Exception('Failed to fetch categories');
       }
@@ -569,20 +561,19 @@ class GeminiMCPService {
         sampleProducts = await _getSampleProductsForCategories(categories);
       }
 
-      return {
-        'message': 'Here are our product categories:',
-        'data': {
-          'type': 'categories',
-          'content': {
-            'categories': categories,
-            'sampleProducts': sampleProducts,
-            'total': categories.length,
-          },
+      return ToolCallResponse(
+        tool: 'get_categories',
+        arguments: arguments,
+        message: 'Here are our product categories:',
+        data: {
+          'categories': categories,
+          'sampleProducts': sampleProducts,
+          'total': categories.length,
         },
-      };
+      );
     } catch (e) {
       debugPrint('[CATEGORIES] Error: $e');
-      return {'message': 'Sorry, I couldn\'t fetch categories at the moment.', 'data': null};
+      return ErrorResponse(message: 'Sorry, I couldn\'t fetch categories at the moment.');
     }
   }
 
@@ -608,7 +599,7 @@ class GeminiMCPService {
   }
 
   // PRODUCT DETAILS IMPLEMENTATION
-  Future<Map<String, dynamic>> _getProductDetails(Map<String, dynamic> arguments) async {
+  Future<AiResponse> _getProductDetails(Map<String, dynamic> arguments) async {
     try {
       String productId = arguments['productId'] ?? '';
       String productTitle = arguments['productTitle'] ?? '';
@@ -618,13 +609,12 @@ class GeminiMCPService {
         final response = await http.get(Uri.parse('$dummyJsonApi/products/$productId'));
         if (response.statusCode == 200) {
           final product = jsonDecode(response.body);
-          return {
-            'message': 'Here are the details for ${product['title']}:',
-            'data': {
-              'type': 'product_details',
-              'content': {'product': product},
-            },
-          };
+          return ToolCallResponse(
+            tool: 'get_product_details',
+            arguments: arguments,
+            message: 'Here are the details for ${product['title']}:',
+            data: {'type': 'product_details', 'product': product},
+          );
         }
       }
 
@@ -637,28 +627,31 @@ class GeminiMCPService {
 
         if (searchResponse.statusCode == 200) {
           final data = jsonDecode(searchResponse.body);
+
           final products = data['products'];
           if (products != null && products != []) {
-            return {
-              'message': 'Here are the details for ${products.first['title']}:',
-              'data': {
+            return ToolCallResponse(
+              tool: 'get_product_details',
+              arguments: arguments,
+              message: 'Here are the details for ${products.first['title']}:',
+              data: {
                 'type': 'product_details',
-                'content': {'product': products is List ? products.first : products},
+                'product': products is List ? products.first : data['product'],
               },
-            };
+            );
           }
         }
       }
 
-      return {'message': 'Sorry, I couldn\'t find details for that product.', 'data': null};
+      return ErrorResponse(message: 'Sorry, I couldn\'t find details for that product.');
     } catch (e) {
       debugPrint('[PRODUCT_DETAILS] Error: $e');
-      return {'message': 'Sorry, I encountered an error fetching product details.', 'data': null};
+      return ErrorResponse(message: 'Sorry, I encountered an error fetching product details.');
     }
   }
 
   // CART MANAGEMENT
-  Map<String, dynamic> _manageCart(Map<String, dynamic> arguments) {
+  AiResponse _manageCart(Map<String, dynamic> arguments) {
     final action = arguments['action'] as String;
 
     switch (action) {
@@ -670,65 +663,55 @@ class GeminiMCPService {
 
         if (productId != null && productData != null) {
           // In a real app, you'd add to persistent cart storage
-          return {
-            'message': 'Product added to cart!',
-            'data': {
-              'type': 'cart_update',
-              'content': {'action': 'add', 'productId': productId, 'quantity': quantity},
-            },
-          };
+          return ToolCallResponse(
+            tool: 'manage_cart',
+            arguments: arguments,
+            message: 'Product added to cart!',
+            data: {'action': 'add', 'productId': productId, 'quantity': quantity},
+          );
         }
-        return {'message': 'Please specify which product to add to cart.', 'data': null};
+        return ErrorResponse(message: 'Please specify which product to add to cart.');
 
       case 'remove':
         final productId = arguments['productId'] as String?;
         if (productId != null) {
-          return {
-            'message': 'Product removed from cart!',
-            'data': {
-              'type': 'cart_update',
-              'content': {'action': 'remove', 'productId': productId},
-            },
-          };
+          return ToolCallResponse(
+            tool: 'manage_cart',
+            arguments: arguments,
+            message: 'Product removed from cart!',
+            data: {'action': 'remove', 'productId': productId},
+          );
         }
-        return {'message': 'Please specify which product to remove from cart.', 'data': null};
+        return ErrorResponse(message: 'Please specify which product to remove from cart.');
 
       case 'update':
         final productId = arguments['productId'] as String?;
         final quantity = (arguments['quantity'] as num?)?.toInt();
         if (productId != null && quantity != null) {
-          return {
-            'message': 'Cart updated!',
-            'data': {
-              'type': 'cart_update',
-              'content': {'action': 'update', 'productId': productId, 'quantity': quantity},
-            },
-          };
+          return ToolCallResponse(
+            tool: 'manage_cart',
+            arguments: arguments,
+            message: 'Cart updated!',
+            data: {'action': 'update', 'productId': productId, 'quantity': quantity},
+          );
         }
-        return {'message': 'Please specify product and quantity to update.', 'data': null};
+        return ErrorResponse(message: 'Please specify product and quantity to update.');
 
       case 'clear':
-        return {
-          'message': 'Cart cleared!',
-          'data': {
-            'type': 'cart_update',
-            'content': {'action': 'clear'},
-          },
-        };
+        return ToolCallResponse(
+          tool: 'manage_cart',
+          arguments: arguments,
+          message: 'Cart cleared!',
+          data: {'action': 'clear'},
+        );
 
       default:
-        return {'message': 'Cart action completed.', 'data': null};
+        return ErrorResponse(message: 'Cart action completed.');
     }
   }
 
-  double _calculateCartTotal() {
-    return HardcodedData.cartItems.fold(0.0, (total, item) {
-      return total + (item.item.price * 2);
-    });
-  }
-
   // RECOMMENDATIONS
-  Future<Map<String, dynamic>> _getRecommendations(Map<String, dynamic> arguments) async {
+  Future<AiResponse> _getRecommendations(Map<String, dynamic> arguments) async {
     try {
       log(arguments.toString());
       final type = arguments['type'] as String? ?? 'trending';
@@ -765,26 +748,28 @@ class GeminiMCPService {
           message = 'Here are recommended $category products:';
         }
 
-        return {
-          'message': message,
-          'data': {
+        return ToolCallResponse(
+          tool: 'get_recommendations',
+          arguments: arguments,
+          message: message,
+          data: {
             'type': 'recommendations',
             'products': products,
             'recommendationType': type,
             'category': category,
           },
-        };
+        );
       }
 
-      return {'message': 'Sorry, I couldn\'t fetch recommendations at the moment.', 'data': null};
+      return ErrorResponse(message: 'Sorry, I couldn\'t fetch recommendations at the moment.');
     } catch (e) {
       debugPrint('[RECOMMENDATIONS] Error: $e');
-      return {'message': 'Sorry, I encountered an error fetching recommendations.', 'data': null};
+      return ErrorResponse(message: 'Sorry, I encountered an error fetching recommendations.');
     }
   }
 
   // EXISTING METHODS (keep from original)
-  Map<String, dynamic> _navigateToPage(Map<String, dynamic> arguments) {
+  AiResponse _navigateToPage(Map<String, dynamic> arguments) {
     final page = arguments['page'] as String?;
     final pageNames = {
       'home': 'Home',
@@ -797,13 +782,15 @@ class GeminiMCPService {
       'deals': 'Deals',
     };
     final pageName = pageNames[page] ?? page;
-    return {
-      'message': '✓ Navigated to $pageName page',
-      'data': {'type': 'navigation', 'page': page},
-    };
+    return ToolCallResponse(
+      tool: 'navigate_to_page',
+      arguments: arguments,
+      message: '✓ Navigated to $pageName page',
+      data: {'type': 'navigation', 'page': page},
+    );
   }
 
-  Map<String, dynamic> _changeTheme(Map<String, dynamic> arguments) {
+  AiResponse _changeTheme(Map<String, dynamic> arguments) {
     final mode = arguments['mode'] as String?;
     final seedColor = arguments['seedColor'] as String?;
     String message = 'Theme updated: ';
@@ -814,13 +801,15 @@ class GeminiMCPService {
       final colorName = _getColorNameFromHex(seedColor);
       message += mode != null ? ' with $colorName color' : '$colorName color scheme';
     }
-    return {
-      'message': message,
-      'data': {'type': 'theme_change', 'mode': mode, 'seedColor': seedColor},
-    };
+    return ToolCallResponse(
+      tool: 'change_theme',
+      arguments: arguments,
+      message: message,
+      data: {'type': 'theme_change', 'mode': mode, 'seedColor': seedColor},
+    );
   }
 
-  Map<String, dynamic> _getKnowledge(Map<String, dynamic> arguments) {
+  AiResponse _getKnowledge(Map<String, dynamic> arguments) {
     final topic = arguments['topic'] as String? ?? 'about';
     final knowledgeBase = {
       'about': {
@@ -877,10 +866,13 @@ class GeminiMCPService {
     };
 
     final knowledge = knowledgeBase[topic] ?? knowledgeBase['about']!;
-    return {
-      'message': 'Here\'s information about $topic',
-      'data': {'type': 'knowledge', 'content': knowledge},
-    };
+
+    return ToolCallResponse(
+      tool: 'get_knowledge',
+      arguments: arguments,
+      message: 'Here\'s information about $topic',
+      data: {'type': 'knowledge', 'content': knowledge},
+    );
   }
 
   // HELPER METHODS (keep from original)

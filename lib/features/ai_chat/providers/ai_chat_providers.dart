@@ -1,7 +1,13 @@
 // ai_chat_provider.dart - REFACTORED
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:generative_ui_with_ecommerce/core/network/api_client.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../core/network/dio_client.dart';
 import '../presentation/data/models/chat_message.dart' show ChatMessage, ChatMessageData;
+import '../data/repositories/ai_chat_repository.dart';
 import '../services/gemini_mcp_service.dart';
 import '../services/chat_history_service.dart';
 
@@ -9,13 +15,13 @@ part 'ai_chat_providers.g.dart';
 
 @Riverpod()
 class AiChat extends _$AiChat {
-  late final GeminiMCPService _geminiService;
+  late final AiChatRepository _aiChatRepository;
   ChatHistoryService? _historyService;
   bool _isInitialized = false;
 
   @override
   List<ChatMessage> build() {
-    _geminiService = GeminiMCPService();
+    _aiChatRepository = ref.watch(aiChatRepository);
     _initializeHistory();
     return [];
   }
@@ -57,33 +63,36 @@ class AiChat extends _$AiChat {
     state = [...state, loadingMessage];
 
     try {
-      // Process through our e-commerce Gemini service
-      final response = await _geminiService.processToolCallingRequest(message);
+      // Process through our e-commerce AI repository
+      final aiResponse = await _aiChatRepository.processMessage(message);
 
-      debugPrint('[PROVIDER] Response type: ${response['type']}');
+      debugPrint('[PROVIDER] Response type: ${aiResponse.type}');
 
       // Remove loading message
       state = state.where((msg) => !msg.isLoading).toList();
 
       ChatMessageData? messageData;
-      if (response['data'] != null) {
-        messageData = ChatMessageData.fromJson(response['data']);
+      if (aiResponse.data != null) {
+        messageData = ChatMessageData.fromJson(aiResponse.data!);
+        log('=========');
+        log(messageData.type);
       }
-      String messageText = response['message'] ?? 'I found some products for you!';
+      String messageText = aiResponse.message ?? 'I found some products for you!';
 
       final aiMessage = ChatMessage(
         text: messageText,
         isUser: false,
         timestamp: DateTime.now(),
         data: messageData,
-        isError: response['type'] == 'error',
+        isError: aiResponse.type == 'error',
       );
 
       // Add AI message to state
       state = [...state, aiMessage];
       _saveMessageToHistory(aiMessage);
 
-      return response;
+      // Convert AiResponse back to Map for return
+      return aiResponse.toJson();
     } catch (e, stackTrace) {
       debugPrint('Error in sendMessage: $e');
       debugPrint('Stack trace: $stackTrace');
@@ -192,3 +201,18 @@ class AiChat extends _$AiChat {
     _saveMessageToHistory(cartUpdateMessage);
   }
 }
+
+final searchProducts = Provider<ApiClient>((ref) {
+  return DioClientFactory.createApiClient(
+    baseUrl: 'https://dummyjson.com',
+    enableLogging: true,
+    enableAuth: false,
+    enableRetry: true,
+    enableCache: false,
+  );
+});
+
+final giminyMCPProvider = Provider<GeminiMCPService>((ref) {
+  final apiClient = ref.watch(searchProducts);
+  return GeminiMCPService(apiClient);
+});

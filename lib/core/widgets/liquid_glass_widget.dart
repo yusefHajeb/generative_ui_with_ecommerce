@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
 class LiquidGlassWidget extends StatelessWidget {
   final Widget child;
@@ -19,15 +18,6 @@ class LiquidGlassWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassGlowLayer(
-      child: LiquidGlass(
-        shape: LiquidRoundedSuperellipse(borderRadius: Radius.circular(borderRadius)),
-        child: GlassGlow(
-          glowColor: glassColor ?? Colors.black,
-          glowRadius: glowRadius,
-          child: child,
-        ),
-      ),
-    );
+    return child;
   }
 }
