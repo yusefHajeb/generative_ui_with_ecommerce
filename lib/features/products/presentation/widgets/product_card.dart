@@ -26,7 +26,7 @@ class ProductCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                 child: CachedNetworkImage(
-                  imageUrl: product.image,
+                  imageUrl: product.image ?? '',
                   height: 150,
                   width: double.infinity,
                   fit: BoxFit.contain,
@@ -50,7 +50,7 @@ class ProductCard extends StatelessWidget {
                     children: [
                       // Title
                       Text(
-                        product.title,
+                        product.title ?? '',
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -106,7 +106,7 @@ class ProductCard extends StatelessWidget {
 
                       // Description (truncated)
                       Text(
-                        product.description,
+                        product.description ?? '',
                         style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,

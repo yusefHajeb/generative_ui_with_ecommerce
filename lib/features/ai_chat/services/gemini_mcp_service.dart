@@ -4,11 +4,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:generative_ui_with_ecommerce/core/network/api_client.dart';
 import 'package:generative_ui_with_ecommerce/core/network/network_service.dart';
+import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
+import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/recommendations_data.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/services/tool_convert.dart'
     show Tool, ToolFunction, convertToolsToGemini;
 import 'package:http/http.dart' as http;
-import '../../../features/products/data/models/product.dart';
 import '../data/models/ai_response.dart';
+import '../data/models/category_model.dart';
 import '../data/models/search_result_model.dart';
 
 // import 'tool_convert.dart';
@@ -49,7 +51,7 @@ class GeminiMCPService extends NetworkService {
         'tools': tools,
         'generationConfig': {'temperature': 0.1, 'topP': 0.9, 'topK': 40},
       };
-      final response = await apiClient.safeApiCall(
+      final response = await super.apiClient.safeApiCall(
         httpMethod: HttpMethod.post,
         endPoint: '$baseUrl/models/$defaultModel:generateContent',
         data: requestBody,
@@ -410,7 +412,7 @@ class GeminiMCPService extends NetworkService {
 
       final searchCriteria = SearchCriteria.fromJson(arguments);
       final productGridData = ProductGridData(
-        products: enhancedProducts.map((p) => Product.fromJson(p)).toList(),
+        products: enhancedProducts.map((p) => ProductModel.fromJson(p)).toList(),
         totalResults: total,
         hasMore: total > enhancedProducts.length,
         searchCriteria: searchCriteria,
@@ -528,48 +530,27 @@ class GeminiMCPService extends NetworkService {
       debugPrint('[CATEGORIES] Fetching categories');
 
       // Get categories from DummyJSON
-      final response = await http.get(Uri.parse('$fakeStoreApi/products/categories'));
 
-      if (response.statusCode != 200) {
-        // Fallback to FakeStore API
-        final fallbackResponse = await http.get(Uri.parse('$fakeStoreApi/products/categories'));
-        if (fallbackResponse.statusCode == 200) {
-          final categories = jsonDecode(fallbackResponse.body) as List;
-          List<dynamic> sampleProducts = [];
-          if (arguments['showProducts'] == true) {
-            sampleProducts = await _getSampleProductsForCategories(categories);
-          }
-          return ToolCallResponse(
-            tool: 'get_categories',
-            arguments: arguments,
-            message: 'Here are our product categories:',
-            data: {
-              'categories': categories,
-              'sampleProducts': sampleProducts,
-              'total': categories.length,
-            },
-          );
-        }
-        throw Exception('Failed to fetch categories');
+      // Fallback to FakeStore API
+      final fallbackResponse = await handleDirectApiRequest<List<CategoryModel>>(
+        endPoint: '$dummyJsonApi/products/categories',
+        httpMethod: HttpMethod.get,
+        fromJson: (json) => (json as List).map((json) => CategoryModel.fromJson(json)).toList(),
+      );
+      final categories = fallbackResponse;
+      CategoriesData categoriesData = CategoriesData(
+        categories: categories,
+        sampleProducts: [],
+        showSampleProduct: arguments['showProducts'] ?? false,
+      );
+      if (arguments['showProducts'] != null && arguments['showProducts'] == true) {
+        categoriesData = await _getSampleProductsForCategories(categories);
       }
-
-      final categories = jsonDecode(response.body) as List;
-
-      // Get sample products if requested
-      List<dynamic> sampleProducts = [];
-      if (arguments['showProducts'] == true) {
-        sampleProducts = await _getSampleProductsForCategories(categories);
-      }
-
       return ToolCallResponse(
         tool: 'get_categories',
         arguments: arguments,
         message: 'Here are our product categories:',
-        data: {
-          'categories': categories,
-          'sampleProducts': sampleProducts,
-          'total': categories.length,
-        },
+        data: {'type': 'categories', 'content': categoriesData.toJson()},
       );
     } catch (e) {
       debugPrint('[CATEGORIES] Error: $e');
@@ -577,29 +558,30 @@ class GeminiMCPService extends NetworkService {
     }
   }
 
-  Future<List<dynamic>> _getSampleProductsForCategories(List<dynamic> categories) async {
-    final sampleProducts = <dynamic>[];
+  Future<CategoriesData> _getSampleProductsForCategories(List<CategoryModel> categories) async {
+    final sampleProducts = <ProductModel>[];
 
     for (final category in categories.take(4)) {
       try {
         final response = await http.get(
-          Uri.parse('$dummyJsonApi/products/category/$category?limit=2'),
+          Uri.parse('$dummyJsonApi/products/category/${category.url}?limit=2'),
         );
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           final products = data['products'] as List;
-          sampleProducts.addAll(products.take(2));
+          sampleProducts.addAll((products).map((toElement) => ProductModel.fromJson(toElement)));
         }
       } catch (e) {
         debugPrint('[SAMPLE_PRODUCTS] Error for category $category: $e');
       }
     }
 
-    return sampleProducts;
+    return CategoriesData(categories: categories, sampleProducts: sampleProducts);
   }
 
   // PRODUCT DETAILS IMPLEMENTATION
   Future<AiResponse> _getProductDetails(Map<String, dynamic> arguments) async {
+    log('-=======get product detaisls');
     try {
       String productId = arguments['productId'] ?? '';
       String productTitle = arguments['productTitle'] ?? '';
@@ -620,6 +602,7 @@ class GeminiMCPService extends NetworkService {
 
       // Fallback to FakeStore API
       if (productId.isEmpty && productTitle.isNotEmpty) {
+        log('productI is null');
         // Search for product by title
         final searchResponse = await http.get(
           Uri.parse('$dummyJsonApi/products/search?q=${Uri.encodeComponent(productTitle)}&limit=1'),
@@ -630,6 +613,7 @@ class GeminiMCPService extends NetworkService {
 
           final products = data['products'];
           if (products != null && products != []) {
+            log(data.toString());
             return ToolCallResponse(
               tool: 'get_product_details',
               arguments: arguments,
@@ -720,7 +704,7 @@ class GeminiMCPService extends NetworkService {
 
       String apiUrl = '$dummyJsonApi/products';
       if (category != null) {
-        apiUrl += '/category/${_mapCategoryToApi(category)}';
+        apiUrl += '/category/$category';
       }
       apiUrl += '?limit=$limit';
 
@@ -736,32 +720,51 @@ class GeminiMCPService extends NetworkService {
           apiUrl += '&select=title,price,rating,images';
           break;
       }
+      final response = await apiClient.safeApiCall(httpMethod: HttpMethod.get, endPoint: apiUrl);
 
-      final response = await http.get(Uri.parse(apiUrl));
+      final products = (response.data['products'] as List<dynamic>)
+          .map((e) => ProductModel.fromJson(e))
+          .toList();
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final products = data['products'] as List;
+      // final recomendation = await handleListApiRequests<ProductModel>(
+      //   httpMethod: HttpMethod.get,
+      //   queryParameters: arguments,
+      //   endPoint: apiUrl,
+      //   fromJson: (json) => ProductModel.fromJson(json),
+      // );
 
-        String message = 'Here are some recommended products for you:';
-        if (category != null) {
-          message = 'Here are recommended $category products:';
-        }
-
-        return ToolCallResponse(
-          tool: 'get_recommendations',
-          arguments: arguments,
-          message: message,
-          data: {
-            'type': 'recommendations',
-            'products': products,
-            'recommendationType': type,
-            'category': category,
-          },
-        );
+      String message = 'Here are some recommended products for you:';
+      if (category != null) {
+        message = 'Here are recommended $category products:';
       }
-
-      return ErrorResponse(message: 'Sorry, I couldn\'t fetch recommendations at the moment.');
+      // return recomendation.fold(
+      //   (l) => ToolCallResponse(
+      //     tool: 'error',
+      //     arguments: arguments,
+      //     message: message,
+      //     data: {"type": "error"},
+      //   ),
+      //   (r) => ToolCallResponse(
+      //     tool: 'get_recommendations',
+      //     arguments: arguments,
+      //     message: message,
+      //     data: {
+      //       'type': 'recommendations',
+      //       'recommendationType': type,
+      //       'content': r.map((e) => e.toJson()),
+      //     },
+      //   ),
+      // );
+      return ToolCallResponse(
+        tool: 'get_recommendations',
+        arguments: arguments,
+        message: message,
+        data: {
+          'type': 'recommendations',
+          'recommendationType': type,
+          'content': RecommendationData(type: type, products: products).toJson(),
+        },
+      );
     } catch (e) {
       debugPrint('[RECOMMENDATIONS] Error: $e');
       return ErrorResponse(message: 'Sorry, I encountered an error fetching recommendations.');

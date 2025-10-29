@@ -1,5 +1,5 @@
 import 'package:generative_ui_with_ecommerce/core/network/base_model.dart';
-import '../../../products/data/models/product.dart';
+import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
 
 class SearchCriteria {
   final String? query;
@@ -68,7 +68,7 @@ class SearchCriteria {
 }
 
 class ProductGridData extends BaseModel {
-  final List<Product> products;
+  final List<ProductModel> products;
   final int totalResults;
   final bool hasMore;
   final SearchCriteria? searchCriteria;
@@ -84,7 +84,8 @@ class ProductGridData extends BaseModel {
 
   factory ProductGridData.fromJson(Map<String, dynamic> json) {
     return ProductGridData(
-      products: (json['products'] as List?)?.map((item) => Product.fromJson(item)).toList() ?? [],
+      products:
+          (json['products'] as List?)?.map((item) => ProductModel.fromJson(item)).toList() ?? [],
       totalResults: json['totalResults'] as int? ?? 0,
       hasMore: json['hasMore'] as bool? ?? false,
       searchCriteria: json['searchCriteria'] != null
@@ -110,19 +111,16 @@ class ProductGridData extends BaseModel {
 }
 
 class ProductDetailsData extends BaseModel {
-  final Product product;
-  final List<String>? images;
-  final List<String>? reviews;
-  final Map<String, dynamic>? specifications;
+  final ProductModel product;
 
-  ProductDetailsData({required this.product, this.images, this.reviews, this.specifications});
+  ProductDetailsData({required this.product});
 
   factory ProductDetailsData.fromJson(Map<String, dynamic> json) {
     return ProductDetailsData(
-      product: Product.fromJson(json['product']),
-      images: (json['images'] as List?)?.cast<String>(),
-      reviews: (json['reviews'] as List?)?.cast<String>(),
-      specifications: json['specifications'] as Map<String, dynamic>?,
+      product: ProductModel.fromJson(json['product']),
+      // images: (json['images'] as List?)?.cast<String>(),
+      // reviews: (json['reviews'] as List?)?.cast<String>(),
+      // specifications: json['specifications'] as Map<String, dynamic>?,
     );
   }
 
@@ -130,9 +128,9 @@ class ProductDetailsData extends BaseModel {
   Map<String, dynamic> toJson() {
     return {
       'product': product.toJson(),
-      if (images != null) 'images': images,
-      if (reviews != null) 'reviews': reviews,
-      if (specifications != null) 'specifications': specifications,
+      // if (images != null) 'images': images,
+      // if (reviews != null) 'reviews': reviews,
+      // if (specifications != null) 'specifications': specifications,
     };
   }
 

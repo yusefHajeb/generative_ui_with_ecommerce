@@ -9,7 +9,7 @@ part 'app_router.g.dart';
 @riverpod
 GoRouter appRouter(Ref ref) {
   return GoRouter(
-    initialLocation: AppRoutes.chatScreen,
+    initialLocation: AppRoutes.home,
     routes: [
       GoRoute(path: AppRoutes.home, builder: (context, state) => const MainScreen()),
       GoRoute(path: AppRoutes.chatScreen, builder: (context, state) => const AiChatPage()),

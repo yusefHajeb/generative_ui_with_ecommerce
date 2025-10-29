@@ -1,4 +1,11 @@
+import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
+
 import '../../../../../core/network/base_model.dart';
+import '../../../data/models/category_model.dart';
+import '../../../data/models/cart_model.dart';
+import '../../../data/models/search_result_model.dart';
+import '../../../data/models/knowledge_model.dart';
+import '../../../data/models/recommendations_data.dart';
 
 class ChatMessage extends BaseModel {
   final String text;
@@ -77,11 +84,59 @@ class ChatMessageData extends BaseModel {
   factory ChatMessageData.fromJson(Map<String, dynamic> json) {
     return ChatMessageData(type: json['type'] as String? ?? '', content: json['content']);
   }
-  dynamic getType(String type, Map<String, dynamic> json) {
-    if (type == 'recommendations') {
-      return json['products'];
+
+  // Type-safe content getters
+  ProductGridData? get asProductGrid {
+    if (type == 'product_grid' && content is Map<String, dynamic>) {
+      return ProductGridData.fromJson(content);
     }
+    return null;
   }
+
+  ProductModel? get asProductDetails {
+    if (type == 'product_details' && content is Map<String, dynamic>) {
+      return ProductModel.fromJson(content);
+    }
+    return null;
+  }
+
+  CategoriesData? get asCategories {
+    if (type == 'categories' && content is Map<String, dynamic>) {
+      return CategoriesData.fromJson(content);
+    }
+    return null;
+  }
+
+  CartData? get asCart {
+    if (type == 'cart' && content is Map<String, dynamic>) {
+      return CartData.fromJson(content);
+    }
+    return null;
+  }
+
+  CartUpdateData? get asCartUpdate {
+    if (type == 'cart_update' && content is Map<String, dynamic>) {
+      return CartUpdateData.fromJson(content);
+    }
+    return null;
+  }
+
+  RecommendationData? get asRecommendations {
+    if (type == 'recommendations' && content is Map<String, dynamic>) {
+      return RecommendationData.fromJson(content);
+    }
+    return null;
+  }
+
+  KnowledgeData? get asKnowledge {
+    if (type == 'knowledge' && content is Map<String, dynamic>) {
+      return KnowledgeData.fromJson(content);
+    }
+    return null;
+  }
+
+  // Legacy support for dynamic content
+  dynamic get legacyContent => content;
 
   @override
   Map<String, dynamic> toJson() {

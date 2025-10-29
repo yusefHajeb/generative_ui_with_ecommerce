@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:generative_ui_with_ecommerce/core/network/api_client.dart';
+import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/network/dio_client.dart';
 import '../presentation/data/models/chat_message.dart' show ChatMessage, ChatMessageData;
@@ -75,7 +76,6 @@ class AiChat extends _$AiChat {
       if (aiResponse.data != null) {
         messageData = ChatMessageData.fromJson(aiResponse.data!);
         log('=========');
-        log(messageData.type);
       }
       String messageText = aiResponse.message ?? 'I found some products for you!';
 
@@ -189,13 +189,16 @@ class AiChat extends _$AiChat {
     _saveMessageToHistory(productDetailsMessage);
   }
 
-  void addProductToCart(String productId, dynamic product) {
+  void addProductToCart(String productId, ProductModel? product) {
     // Add a cart update message
     final cartUpdateMessage = ChatMessage(
       text: 'Added to cart!',
       isUser: false,
       timestamp: DateTime.now(),
-      data: ChatMessageData(type: 'cart_update', content: {'action': 'add', 'product': product}),
+      data: ChatMessageData(
+        type: 'cart_update',
+        content: {'type': 'cart_update', 'product': product},
+      ),
     );
     state = [...state, cartUpdateMessage];
     _saveMessageToHistory(cartUpdateMessage);

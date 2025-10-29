@@ -36,8 +36,10 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
     final messages = ref.watch(aiChatProvider);
 
     debugPrint('[BUILD] Total messages: ${messages.length}');
-    log('------');
-    log(messages.first.data.toString());
+    if (messages.isNotEmpty) {
+      log('------');
+      log(messages.first.data.toString());
+    }
 
     return Scaffold(
       appBar: AppBar(

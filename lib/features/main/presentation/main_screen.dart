@@ -67,6 +67,7 @@ class MainScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      constraints: BoxConstraints(maxHeight: 760, maxWidth: double.infinity),
       backgroundColor: Colors.transparent,
       builder: (context) => DynamicChatWidget(
         isFullScreen: false,

@@ -3,11 +3,11 @@ import 'package:generative_ui_with_ecommerce/core/network/base_model.dart';
 /// Product model for Fake Store API
 class Product extends BaseModel {
   final int id;
-  final String title;
+  final String? title;
   final double price;
-  final String description;
+  final String? description;
   final String category;
-  final String image;
+  final String? image;
   final Rating rating;
 
   Product({
@@ -23,12 +23,14 @@ class Product extends BaseModel {
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
       id: json['id'] as int,
-      title: json['title'] as String,
+      title: json['title'] as String? ?? '',
       price: (json['price'] as num).toDouble(),
-      description: json['description'] as String,
-      category: json['category'] as String,
-      image: json['image'] as String,
-      rating: Rating.fromJson(json['rating'] as Map<String, dynamic>),
+      description: json['description'] as String? ?? '',
+      category: json['category'] as String? ?? '',
+      image: json['image'] == null ? json['thumbnail'] : json['image'] as String? ?? '',
+      rating: (json['rating'] is double)
+          ? Rating(rate: (json['rating'] as num).toDouble(), count: 0)
+          : Rating.fromJson(json['rating'] as Map<String, dynamic>),
     );
   }
 

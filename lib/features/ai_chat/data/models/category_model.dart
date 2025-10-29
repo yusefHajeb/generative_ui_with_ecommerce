@@ -1,39 +1,24 @@
 import 'package:generative_ui_with_ecommerce/core/network/base_model.dart';
+import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
 
 class CategoryModel extends BaseModel {
   final String name;
   final String slug;
-  final String? description;
-  final String? imageUrl;
-  final int? productCount;
+  final String? url;
 
-  CategoryModel({
-    required this.name,
-    required this.slug,
-    this.description,
-    this.imageUrl,
-    this.productCount,
-  });
+  CategoryModel({required this.name, required this.slug, required this.url});
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
     return CategoryModel(
       name: json['name'] as String? ?? '',
       slug: json['slug'] as String? ?? '',
-      description: json['description'] as String?,
-      imageUrl: json['imageUrl'] as String?,
-      productCount: json['productCount'] as int?,
+      url: json['url'] as String?,
     );
   }
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'slug': slug,
-      if (description != null) 'description': description,
-      if (imageUrl != null) 'imageUrl': imageUrl,
-      if (productCount != null) 'productCount': productCount,
-    };
+    return {'name': name, 'slug': slug, 'url': url};
   }
 
   @override
@@ -42,24 +27,41 @@ class CategoryModel extends BaseModel {
   }
 }
 
-class CategoriesData {
+class CategoriesData extends BaseModel {
   final List<CategoryModel> categories;
-  final List<dynamic> sampleProducts;
+  final List<ProductModel> sampleProducts;
+  final int? total;
+  final bool? showSampleProduct;
 
-  CategoriesData({required this.categories, required this.sampleProducts});
+  CategoriesData({
+    required this.categories,
+    required this.sampleProducts,
+    this.showSampleProduct,
+    this.total,
+  });
 
   factory CategoriesData.fromJson(Map<String, dynamic> json) {
     return CategoriesData(
+      total: json['total'] ?? 0,
+      showSampleProduct: json['showProducts'] ?? false,
       categories:
           (json['categories'] as List?)?.map((item) => CategoryModel.fromJson(item)).toList() ?? [],
-      sampleProducts: json['sampleProducts'] as List? ?? [],
+      sampleProducts: (json['sampleProducts'] as List<dynamic>? ?? [])
+          .map((e) => ProductModel.fromJson(e))
+          .toList(),
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'categories': categories.map((c) => c.toJson()).toList(),
-      'sampleProducts': sampleProducts,
+      'sampleProducts': sampleProducts.map((product) => product.toJson()).toList(),
     };
+  }
+
+  @override
+  BaseModel fromJson(Map<String, dynamic> json) {
+    return CategoriesData.fromJson(json);
   }
 }

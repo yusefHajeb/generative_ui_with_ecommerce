@@ -20,8 +20,7 @@ class ChipButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 30,
-
+      // height: 30,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
