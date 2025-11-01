@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:generative_ui_with_ecommerce/core/extentions/app_extentions.dart';
 import '../../providers/ai_chat_providers.dart';
 import 'chat_input_area.dart';
 import 'chat_message_list.dart';
@@ -52,7 +53,7 @@ class _DynamicChatWidgetState extends ConsumerState<DynamicChatWidget> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.isDark ? const Color.fromARGB(230, 23, 22, 22) : Colors.white,
         borderRadius: widget.isFullScreen
             ? BorderRadius.zero
             : const BorderRadius.vertical(top: Radius.circular(20)),

@@ -18,18 +18,10 @@ class MessageBubble extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
       child: Row(
         mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // if (!isUser) ...[
-          //   CircleAvatar(
-          //     radius: 16,
-          //     backgroundColor: theme.primaryColor.withOpacity(0.1),
-          //     child: Icon(Icons.smart_toy, size: 16, color: theme.primaryColor),
-          //   ),
-          //   const SizedBox(width: 8),
-          // ] اريد منتجات ترند
           Flexible(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.85),
@@ -51,13 +43,14 @@ class MessageBubble extends StatelessWidget {
                     ],
                   ),
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (message.text.isNotEmpty)
                         Text(
                           message.text,
                           style: TextStyle(
-                            color: isUser ? Colors.white : theme.textTheme.bodyLarge?.color,
+                            color: isUser ? Colors.white : AppColors.white,
                             fontSize: 16,
                           ),
                         ),

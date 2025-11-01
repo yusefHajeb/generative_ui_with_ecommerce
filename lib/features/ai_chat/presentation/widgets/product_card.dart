@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:generative_ui_with_ecommerce/core/widgets/operation_dialog.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
 
 import '../../../../core/theme/app_color.dart';
@@ -22,7 +23,6 @@ class ProductCardWidget extends StatelessWidget {
         : null;
     return GestureDetector(
       onTap: () {
-        // Show product details
         ref.read(aiChatProvider.notifier).showProductDetails(product);
       },
       child: SingleChildScrollView(
@@ -41,7 +41,6 @@ class ProductCardWidget extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Product Image
               Container(
                 height: 100,
                 width: double.infinity,
@@ -79,8 +78,6 @@ class ProductCardWidget extends StatelessWidget {
                       ),
 
                     const Gap(2),
-
-                    // Price
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -137,15 +134,13 @@ class ProductCardWidget extends StatelessWidget {
 
                     // Rating
                     const Gap(4),
-
-                    // Add to Cart Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
-                          ref
-                              .read(aiChatProvider.notifier)
-                              .addProductToCart(product?.id.toString() ?? '', product);
+                        onPressed: () async {
+                          if (product == null) return;
+
+                          await OperationDialog.showCartOperationDialog(context, ref, product);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary500,

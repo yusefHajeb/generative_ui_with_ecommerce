@@ -197,7 +197,7 @@ class AiChat extends _$AiChat {
       timestamp: DateTime.now(),
       data: ChatMessageData(
         type: 'cart_update',
-        content: {'type': 'cart_update', 'product': product},
+        content: {'type': 'cart_update', "action": "add", 'product': product},
       ),
     );
     state = [...state, cartUpdateMessage];

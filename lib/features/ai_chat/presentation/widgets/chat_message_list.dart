@@ -44,6 +44,7 @@ class _ChatMessageListState extends State<ChatMessageList> {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
+      shrinkWrap: true,
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(vertical: 16),
       itemCount: widget.messages.length,
