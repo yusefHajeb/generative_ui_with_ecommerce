@@ -78,7 +78,9 @@ class ProductDetailsCard extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                ref.read(aiChatProvider.notifier).addProductToCart(product!.id.toString(), product);
+                ref
+                    .read(aiChatProvider.notifier)
+                    .addProductToCart(product?.id.toString() ?? '', product);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue.shade600,

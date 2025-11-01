@@ -52,7 +52,7 @@ class _DynamicChatWidgetState extends ConsumerState<DynamicChatWidget> {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 249, 240, 222),
+        color: Colors.white,
         borderRadius: widget.isFullScreen
             ? BorderRadius.zero
             : const BorderRadius.vertical(top: Radius.circular(20)),

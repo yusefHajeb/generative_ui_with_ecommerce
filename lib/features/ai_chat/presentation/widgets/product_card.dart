@@ -84,13 +84,43 @@ class ProductCardWidget extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          '\$${product?.price.toStringAsFixed(2) ?? '0.00'}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: Colors.green,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              '\$${product?.price.toStringAsFixed(2) ?? '0.00'}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: Colors.green,
+                              ),
+                            ),
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                borderRadius: BorderRadius.horizontal(
+                                  left: Radius.circular(12),
+                                  right: Radius.circular(12),
+                                ),
+                              ),
+                              child: Row(
+                                spacing: 5,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    product?.rating.toString() ?? '',
+                                    style: TextStyle(fontSize: 10, color: Colors.white),
+                                  ),
+                                  Container(color: Colors.white, height: 10, width: 1),
+                                  Text(
+                                    product?.averageRating.toStringAsFixed(2).toString() ?? '',
+                                    style: TextStyle(fontSize: 10, color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                         if (hasDiscount && originalPrice != null) ...[
                           Text(

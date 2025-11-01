@@ -177,13 +177,13 @@ class AiChat extends _$AiChat {
     }
   }
 
-  void showProductDetails(dynamic product) {
+  void showProductDetails(ProductModel? product) {
     // Add a message with product details
     final productDetailsMessage = ChatMessage(
-      text: 'Here are the details for "${product['title'] ?? 'this product'}":',
+      text: 'Here are the details for "${product?.title ?? 'this product'}":',
       isUser: false,
       timestamp: DateTime.now(),
-      data: ChatMessageData(type: 'product_details', content: product),
+      data: ChatMessageData(type: 'product_details', content: product?.toJson()),
     );
     state = [...state, productDetailsMessage];
     _saveMessageToHistory(productDetailsMessage);

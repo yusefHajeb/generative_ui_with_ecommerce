@@ -116,7 +116,8 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                     itemBuilder: (context, index) {
                       final message = messages[index];
                       log('messsage 113');
-                      log(message.toString());
+                      // log(message.text);
+                      // log(message.data?.toJson().toString() ?? '');
                       return _buildMessageBubble(message);
                     },
                   ),
