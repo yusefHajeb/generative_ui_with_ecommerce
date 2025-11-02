@@ -6,10 +6,10 @@ import 'package:generative_ui_with_ecommerce/core/providers/bottom_navigation_pr
 import 'package:generative_ui_with_ecommerce/core/widgets/bottom_navigation_bar.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/dynamic_chat_widget.dart'
     show DynamicChatWidget;
+import 'package:generative_ui_with_ecommerce/features/cart/presentation/screens/cart_screen.dart';
 import 'package:generative_ui_with_ecommerce/features/home_page/presentation/home_screen.dart';
 import 'package:generative_ui_with_ecommerce/features/products/presentation/screens/products_screen.dart';
 import 'package:generative_ui_with_ecommerce/features/search/presentation/screens/search_screen.dart';
-import 'package:generative_ui_with_ecommerce/features/settings/presentation/screens/settings_screen.dart';
 
 import '../../../core/widgets/liquid_glass_widget.dart' show LiquidGlassWidget;
 import '../../ai_chat/presentation/screens/ai_chat_screen_new.dart';
@@ -57,7 +57,7 @@ class MainScreen extends ConsumerWidget {
       case 2:
         return const SearchScreen();
       case 3:
-        return const SettingsScreen();
+        return const CartScreen();
       default:
         return const HomeScreen();
     }

@@ -9,7 +9,8 @@ class OperationDialog {
     WidgetRef ref,
     ProductModel? product,
   ) async {
-    final state = await ref.read(cartProvider.notifier).addToCart(product!);
+    final state = ref.watch(cartAddOperationProvider);
+    final state2 = await state(product!, quantity: 1);
     await showDialog<void>(
       context: context,
       barrierDismissible: false, // prevent closing during operation
@@ -20,7 +21,7 @@ class OperationDialog {
               title: const Text('Updating Cart'),
               content: SizedBox(
                 width: 200,
-                child: state.fold(
+                child: state2.fold(
                   // On error
                   (error) => Column(
                     mainAxisSize: MainAxisSize.min,
