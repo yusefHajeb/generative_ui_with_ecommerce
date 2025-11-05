@@ -10,10 +10,16 @@ import '../../../../core/theme/app_color.dart';
 
 // ignore: must_be_immutable
 class ProductCardWidget extends StatelessWidget {
-  ProductCardWidget({super.key, required this.ref, required this.product});
+  ProductCardWidget({
+    super.key,
+    required this.ref,
+    required this.product,
+    this.isInChatbot = false,
+  });
 
   WidgetRef ref;
   final ProductModel? product;
+  final bool isInChatbot;
 
   @override
   Widget build(BuildContext context) {
@@ -141,7 +147,12 @@ class ProductCardWidget extends StatelessWidget {
                         onPressed: () async {
                           if (product == null) return;
 
-                          await OperationDialog.showCartOperationDialog(context, ref, product);
+                          await OperationDialog.showCartOperationDialog(
+                            context,
+                            ref,
+                            product,
+                            isFromChatbot: isInChatbot,
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary500,

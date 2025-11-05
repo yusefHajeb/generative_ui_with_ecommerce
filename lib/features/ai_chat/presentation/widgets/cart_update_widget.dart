@@ -12,7 +12,7 @@ class CartUpdateWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (action == 'add') {
-      Container(
+      return Container(
         margin: const EdgeInsets.only(top: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(

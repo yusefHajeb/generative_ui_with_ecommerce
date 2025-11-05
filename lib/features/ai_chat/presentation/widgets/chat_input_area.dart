@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:generative_ui_with_ecommerce/core/constants/constantnts.dart';
+import 'package:generative_ui_with_ecommerce/core/theme/app_color.dart';
 
 class ChatInputArea extends StatelessWidget {
   final TextEditingController controller;
@@ -26,14 +28,28 @@ class ChatInputArea extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Clear button
           if (onClear != null)
             IconButton(
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
+                  if (states.contains(WidgetState.disabled)) {
+                    return AppColors.primaryColor.withValues(alpha: 0.6);
+                  }
+                  return AppColors.primary50;
+                }),
+              ),
+              // color: AppColors.primary10,
               onPressed: onClear,
-              icon: Icon(Icons.delete_outline, color: theme.colorScheme.error, size: 20),
+              icon: Container(
+                width: 90,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  // color: AppColors.primary10,
+                  image: DecorationImage(image: AssetImage(Constantnts.record)),
+                ),
+              ),
             ),
 
-          // Text input
           Expanded(
             child: Container(
               height: 44,
@@ -56,7 +72,6 @@ class ChatInputArea extends StatelessWidget {
                         focusNode: focusNode,
                         decoration: const InputDecoration(
                           fillColor: Color(0xFFF5F5F5),
-
                           constraints: BoxConstraints(maxHeight: 30),
                           focusedBorder: InputBorder.none,
                           hintStyle: TextStyle(color: Color(0xFF303030), fontSize: 14, height: 1.4),
@@ -64,11 +79,9 @@ class ChatInputArea extends StatelessWidget {
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.zero,
                         ),
-                        maxLines: 4,
-                        minLines: 1,
-
                         style: TextStyle(color: const Color.fromARGB(255, 53, 50, 50)),
                         textInputAction: TextInputAction.send,
+                        keyboardType: TextInputType.multiline,
                         onFieldSubmitted: (_) => onSend(),
                       ),
                     ),
@@ -78,7 +91,7 @@ class ChatInputArea extends StatelessWidget {
                     decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                     child: IconButton(
                       onPressed: onSend,
-                      icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.black, size: 17),
+                      icon: Image.asset(Constantnts.send, width: 50, fit: BoxFit.cover),
                     ),
                   ),
                 ],

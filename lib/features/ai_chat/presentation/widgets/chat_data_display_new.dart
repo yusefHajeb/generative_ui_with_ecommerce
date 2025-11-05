@@ -15,7 +15,7 @@ import 'package:generative_ui_with_ecommerce/features/cart/data/models/cart_mode
 import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/base_provider_widget.dart';
 import '../../../cart/data/models/cart_product.dart';
-import '../../../cart/presentation/providers/cart_provider.dart';
+import '../../../cart/providers/cart_provider.dart';
 import '../../../cart/presentation/widgets/card_body_widget.dart';
 import '../data/models/chat_message.dart';
 import 'html_chat_display.dart';
@@ -31,7 +31,7 @@ class ChatDataDisplay extends ConsumerWidget {
     final cartAsync = ref.watch(cartProvider);
     final cartTotalPrice = ref.watch(cartTotalPriceProvider);
     switch (data.type) {
-      case 'product_grid':
+      case 'product_grid':  
         return ProductGridWidget(productGrid: data.asProductGrid);
       case 'product_details':
         return ProductDetailsCard(ref: ref, product: data.asProductDetails);
@@ -79,6 +79,7 @@ class ChatDataDisplay extends ConsumerWidget {
                 context.push('/dialoge-test');
               },
               onClear: () => Icon(Icons.clear_all), // Optional
+              showSummary: false,
             );
           },
         );
@@ -149,7 +150,9 @@ class ChatDataDisplay extends ConsumerWidget {
               ),
             ),
             const Gap(8),
-            ...sampleProducts.map((product) => ProductCardWidget(product: product, ref: ref)),
+            ...sampleProducts.map(
+              (product) => ProductCardWidget(product: product, ref: ref, isInChatbot: true),
+            ),
           ],
         ],
       ),
@@ -188,7 +191,7 @@ class ChatDataDisplay extends ConsumerWidget {
             ),
             itemCount: products?.length ?? 0,
             itemBuilder: (context, index) {
-              return ProductCardWidget(ref: ref, product: products?[index]);
+              return ProductCardWidget(ref: ref, product: products?[index], isInChatbot: true);
             },
           ),
         ],
