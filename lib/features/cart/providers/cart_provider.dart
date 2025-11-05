@@ -31,12 +31,28 @@ class CartNotifier extends _$CartNotifier {
   }
 
   /// Add product to cart
-  Future<Either<Failure, Cart>> addToCart(ProductModel product, {int quantity = 1}) async {
-    log('add product');
+  // Future<Either<Failure, Cart>> addToCart(ProductModel product, {int quantity = 1}) async {
+  //   log('add product');
+  //   final cartRepository = ref.read(cartRepositoryProvider);
+  //   final result = await cartRepository.addToCart(product, quantity);
+  //   print(result.isLeft().toString() + result.toString());
+  //   return result;
+  // }
+
+  Future<void> addToCart(ProductModel product, {int quantity = 1}) async {
+    log('Adding product to cart...');
     final cartRepository = ref.read(cartRepositoryProvider);
     final result = await cartRepository.addToCart(product, quantity);
-    print(result.isLeft().toString() + result.toString());
-    return result;
+
+    result.fold(
+      (failure) {
+        print('Failed to add product to cart: ${failure.message}');
+      },
+      (updatedCart) {
+        // ✅ This line updates the state and triggers UI rebuild
+        state = AsyncData(updatedCart);
+      },
+    );
   }
 
   /// Update product quantity in cart
@@ -123,10 +139,3 @@ int cartItemsCount(Ref ref) {
 }
 
 typedef CartAdd = Future<Either<Failure, Cart>> Function(ProductModel product, {int quantity});
-
-@riverpod
-CartAdd cartAddOperation(Ref ref) {
-  final notifier = ref.read(cartProvider.notifier);
-  return (ProductModel product, {int quantity = 1}) =>
-      notifier.addToCart(product, quantity: quantity);
-}

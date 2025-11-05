@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:generative_ui_with_ecommerce/core/constants/constantnts.dart';
 import 'package:generative_ui_with_ecommerce/core/widgets/base_provider_widget.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/dynamic_chat_widget.dart';
 import 'package:generative_ui_with_ecommerce/features/cart/data/models/cart_model.dart';
-import 'package:generative_ui_with_ecommerce/features/cart/presentation/providers/cart_provider.dart';
+import 'package:generative_ui_with_ecommerce/features/cart/providers/cart_provider.dart';
 
+import '../../../../core/theme/app_color.dart';
 import '../../data/models/cart_product.dart';
 import '../widgets/card_body_widget.dart';
 
@@ -24,7 +26,7 @@ class CartScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Shopping Cart'),
+        title: const Text('Shopping Cart', style: TextStyle(color: AppColors.primary10)),
         centerTitle: true,
         actions: [
           if (cartItemsCount > 0)
@@ -62,7 +64,22 @@ class CartScreen extends ConsumerWidget {
         errorWidget: (error, stackTrace) => _buildErrorState(context, error),
         builder: (context, cart) {
           if (cart.products.isEmpty) {
-            return _buildEmptyState(context);
+            return EmptCartWidget(
+              context: context,
+              continueOnnPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  constraints: BoxConstraints(maxHeight: 760, maxWidth: double.infinity),
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => DynamicChatWidget(
+                    isFullScreen: true,
+                    onClose: () => log('object'),
+                    onToggleFullScreen: () => log('onLogTogel'),
+                  ),
+                );
+              },
+            );
           }
 
           return CartBodyWidget(
@@ -139,18 +156,22 @@ class CartScreen extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _buildEmptyState(BuildContext context) {
+class EmptCartWidget extends StatelessWidget {
+  final void Function()? continueOnnPressed;
+  const EmptCartWidget({super.key, required this.context, required this.continueOnnPressed});
+
+  final BuildContext context;
+
+  @override
+  Widget build(BuildContext context) {
     return Center(
       child:
           Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.shopping_cart_outlined,
-                    size: 80,
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                  Image.asset(Constantnts.cartIcon, width: 360),
                   const Gap(16),
                   Text('Your cart is empty', style: Theme.of(context).textTheme.headlineSmall),
                   const Gap(8),
@@ -163,19 +184,7 @@ class CartScreen extends ConsumerWidget {
                   ),
                   const Gap(32),
                   ElevatedButton.icon(
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        constraints: BoxConstraints(maxHeight: 760, maxWidth: double.infinity),
-                        backgroundColor: Colors.transparent,
-                        builder: (context) => DynamicChatWidget(
-                          isFullScreen: true,
-                          onClose: () => log('object'),
-                          onToggleFullScreen: () => log('onLogTogel'),
-                        ),
-                      );
-                    },
+                    onPressed: continueOnnPressed,
                     icon: const Icon(Icons.shopping_bag),
                     label: const Text('Continue Shopping'),
                   ),

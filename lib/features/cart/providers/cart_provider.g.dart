@@ -33,7 +33,7 @@ final class CartNotifierProvider
   CartNotifier create() => CartNotifier();
 }
 
-String _$cartNotifierHash() => r'98ba7b38271df0017bf979e92eeb3f96941f2fa3';
+String _$cartNotifierHash() => r'9495449cf9c39343dfbe618ac9a71e26deb2617f';
 
 abstract class _$CartNotifier extends $AsyncNotifier<Cart> {
   FutureOr<Cart> build();
@@ -189,44 +189,3 @@ final class CartItemsCountProvider extends $FunctionalProvider<int, int, int>
 }
 
 String _$cartItemsCountHash() => r'a051feb95633f8f8bcbf88bbfd9ac974d70e225f';
-
-@ProviderFor(cartAddOperation)
-const cartAddOperationProvider = CartAddOperationProvider._();
-
-final class CartAddOperationProvider
-    extends $FunctionalProvider<CartAdd, CartAdd, CartAdd>
-    with $Provider<CartAdd> {
-  const CartAddOperationProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'cartAddOperationProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$cartAddOperationHash();
-
-  @$internal
-  @override
-  $ProviderElement<CartAdd> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  CartAdd create(Ref ref) {
-    return cartAddOperation(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(CartAdd value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<CartAdd>(value),
-    );
-  }
-}
-
-String _$cartAddOperationHash() => r'3d404767e40d03727c108d52b1396bb67443e41e';

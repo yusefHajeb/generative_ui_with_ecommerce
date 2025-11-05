@@ -20,7 +20,7 @@ import '../data/models/search_result_model.dart';
 typedef MCPToolCallingService = GeminiMCPService;
 
 class GeminiMCPService extends NetworkService {
-  static const String apiKey = '';
+  static const String apiKey = 'AIzaSyDqn-m4hiyYESH_PoMU-jOzZ2tSTPgGO58';
   static const String defaultModel = 'gemini-2.0-flash';
   static const String baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
 
@@ -651,6 +651,7 @@ class GeminiMCPService extends NetworkService {
         final productData = arguments['productData'] as Map<String, dynamic>?;
 
         if (productId != null && productData != null) {
+          log('=======add to cart ');
           return await manageCartService.addToCart(productId, productData, quantity);
         }
         return ErrorResponse(message: 'Please specify which product to add to cart.');
