@@ -53,7 +53,6 @@ class ProductGridWidget extends ConsumerWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.filter_alt, size: 16, color: Colors.blue.shade700),
                   const Gap(8),
                   Text(
                     '${productGrid?.totalResults} products found',
@@ -81,7 +80,7 @@ class ProductGridWidget extends ConsumerWidget {
             itemBuilder: (context, index) {
               final product = products?[index];
 
-              return ProductCardWidget(product: product, ref: ref);
+              return ProductCardWidget(product: product, ref: ref, isInChatbot: true);
             },
           ),
         ],

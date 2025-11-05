@@ -27,6 +27,7 @@ enum NavigationItem {
   home('Home'),
   basket('Shopping Basket'),
   search('Search'),
+  cart('Cart'),
   settings('Settings');
 
   const NavigationItem(this.label);

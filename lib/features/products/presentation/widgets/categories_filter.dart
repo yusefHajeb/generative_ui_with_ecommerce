@@ -23,6 +23,8 @@ class CategoriesFilter extends StatelessWidget {
             return Container(
               margin: const EdgeInsets.only(right: 8),
               child: ChipButton(
+                backgroundColor: Colors.transparent,
+                textColor: Colors.black,
                 onPressed: () {
                   if (category == 'All') {
                     ref.invalidate(productsProvider);

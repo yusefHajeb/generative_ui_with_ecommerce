@@ -9,6 +9,9 @@ import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/recomm
 import 'package:generative_ui_with_ecommerce/features/ai_chat/services/tool_convert.dart'
     show Tool, ToolFunction, convertToolsToGemini;
 import 'package:http/http.dart' as http;
+import 'package:generative_ui_with_ecommerce/features/cart/data/repositories/cart_repository.dart';
+import 'package:generative_ui_with_ecommerce/features/cart/data/services/manage_cart_service.dart';
+// import 'package:generative_ui_with_ecommerce/features/products/data/models/product.dart';
 import '../data/models/ai_response.dart';
 import '../data/models/category_model.dart';
 import '../data/models/search_result_model.dart';
@@ -17,7 +20,7 @@ import '../data/models/search_result_model.dart';
 typedef MCPToolCallingService = GeminiMCPService;
 
 class GeminiMCPService extends NetworkService {
-  static const String apiKey = '';
+  static const String apiKey = 'AIzaSyDqn-m4hiyYESH_PoMU-jOzZ2tSTPgGO58';
   static const String defaultModel = 'gemini-2.0-flash';
   static const String baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
 
@@ -635,36 +638,28 @@ class GeminiMCPService extends NetworkService {
   }
 
   // CART MANAGEMENT
-  AiResponse _manageCart(Map<String, dynamic> arguments) {
+  Future<AiResponse> _manageCart(Map<String, dynamic> arguments) async {
+    final manageCartService = ManageCartService(CartRepository(apiClient));
     final action = arguments['action'] as String;
 
     switch (action) {
       case 'view':
+        return await manageCartService.viewCart();
       case 'add':
         final productId = arguments['productId'] as String?;
         final quantity = (arguments['quantity'] as num?)?.toInt() ?? 1;
         final productData = arguments['productData'] as Map<String, dynamic>?;
 
         if (productId != null && productData != null) {
-          // In a real app, you'd add to persistent cart storage
-          return ToolCallResponse(
-            tool: 'manage_cart',
-            arguments: arguments,
-            message: 'Product added to cart!',
-            data: {'action': 'add', 'productId': productId, 'quantity': quantity},
-          );
+          log('=======add to cart ');
+          return await manageCartService.addToCart(productId, productData, quantity);
         }
         return ErrorResponse(message: 'Please specify which product to add to cart.');
 
       case 'remove':
         final productId = arguments['productId'] as String?;
         if (productId != null) {
-          return ToolCallResponse(
-            tool: 'manage_cart',
-            arguments: arguments,
-            message: 'Product removed from cart!',
-            data: {'action': 'remove', 'productId': productId},
-          );
+          return await manageCartService.removeFromCart(productId);
         }
         return ErrorResponse(message: 'Please specify which product to remove from cart.');
 
@@ -672,25 +667,15 @@ class GeminiMCPService extends NetworkService {
         final productId = arguments['productId'] as String?;
         final quantity = (arguments['quantity'] as num?)?.toInt();
         if (productId != null && quantity != null) {
-          return ToolCallResponse(
-            tool: 'manage_cart',
-            arguments: arguments,
-            message: 'Cart updated!',
-            data: {'action': 'update', 'productId': productId, 'quantity': quantity},
-          );
+          return await manageCartService.updateCartQuantity(productId, quantity);
         }
         return ErrorResponse(message: 'Please specify product and quantity to update.');
 
       case 'clear':
-        return ToolCallResponse(
-          tool: 'manage_cart',
-          arguments: arguments,
-          message: 'Cart cleared!',
-          data: {'action': 'clear'},
-        );
+        return await manageCartService.clearCart();
 
       default:
-        return ErrorResponse(message: 'Cart action completed.');
+        return ErrorResponse(message: 'Invalid cart action.');
     }
   }
 

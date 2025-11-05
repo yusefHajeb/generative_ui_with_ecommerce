@@ -13,7 +13,7 @@ class AppTheme {
     onPrimary: AppColors.primary500,
     secondary: Colors.white,
 
-    surface: AppColors.primary50,
+    surface: AppColors.white,
 
     onSurface: AppColors.primary500,
   );
@@ -28,6 +28,7 @@ class AppTheme {
   }
 
   static ThemeData lightTheme() => ThemeData(
+    colorScheme: lightColorScheme,
     useMaterial3: false,
     brightness: Brightness.light,
     appBarTheme: AppBarTheme(
@@ -103,6 +104,7 @@ class AppTheme {
   );
 
   static ThemeData darkTheme() => ThemeData(
+    colorScheme: darkColorScheme,
     useMaterial3: false,
     brightness: Brightness.dark,
     appBarTheme: AppBarTheme(
@@ -161,11 +163,6 @@ class AppTheme {
     scrollbarTheme: ScrollbarThemeData(
       radius: const Radius.circular(5),
       thumbColor: WidgetStateProperty.all(AppColors.primaryColor.withValues(alpha: 0.5)),
-    ),
-    colorScheme: ColorScheme.fromSwatch().copyWith(
-      secondary: Colors.white,
-      brightness: Brightness.dark,
-      outline: AppColors.primary300,
     ),
   );
 

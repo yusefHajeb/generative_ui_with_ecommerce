@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
@@ -9,6 +11,12 @@ import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widge
     show ProductCardWidget;
 import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/product_grid_widget.dart'
     show ProductGridWidget;
+import 'package:generative_ui_with_ecommerce/features/cart/data/models/cart_model.dart' show Cart;
+import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/base_provider_widget.dart';
+import '../../../cart/data/models/cart_product.dart';
+import '../../../cart/providers/cart_provider.dart';
+import '../../../cart/presentation/widgets/card_body_widget.dart';
 import '../data/models/chat_message.dart';
 import 'html_chat_display.dart';
 import 'product_details_card.dart';
@@ -20,21 +28,65 @@ class ChatDataDisplay extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    debugPrint('[E-COMMERCE_DISPLAY] Building for type: ${data.type}');
-
+    final cartAsync = ref.watch(cartProvider);
+    final cartTotalPrice = ref.watch(cartTotalPriceProvider);
     switch (data.type) {
-      case 'product_grid':
+      case 'product_grid':  
         return ProductGridWidget(productGrid: data.asProductGrid);
       case 'product_details':
         return ProductDetailsCard(ref: ref, product: data.asProductDetails);
       case 'categories':
         return _buildCategories(context, ref, data.asCategories);
       case 'cart':
-        return _buildCart(context, ref, data.content);
+        return BaseStateWidget(
+          provider: cartAsync,
+          fakeData: Cart(
+            discountedTotal: 243,
+            id: 2,
+            products: List.generate(
+              3,
+              (g) => CartProduct(
+                id: 1,
+                title: 'title',
+                price: 2323.323,
+                quantity: 3,
+                total: 42.3,
+                discountPercentage: 33.4,
+                discountedTotal: 43,
+                thumbnail: '',
+              ),
+            ),
+            total: 232.3,
+            userId: 2,
+            totalProducts: 23,
+            totalQuantity: 23,
+          ), // Use your helper
+          errorWidget: (error, stackTrace) => Text(error.toString()),
+          builder: (context, cart) {
+            if (cart.products.isEmpty) {
+              return Text('data');
+            }
+            return CartBodyWidget(
+              cart: cart,
+              totalPrice: cartTotalPrice,
+              onQuantityChanged: (productId, quantity) {
+                ref.read(cartProvider.notifier).updateQuantity(productId, quantity);
+              },
+              onRemove: (productId) {
+                ref.read(cartProvider.notifier).removeFromCart(productId);
+              },
+              onCheckout: () {
+                context.push('/dialoge-test');
+              },
+              onClear: () => Icon(Icons.clear_all), // Optional
+              showSummary: false,
+            );
+          },
+        );
       case 'recommendations':
         return _buildRecommendations(context, ref, data.asRecommendations);
       case 'cart_update':
-        return _buildCartUpdate(context, ref, data.content['product']);
+        return _buildCartUpdate(context, ref, data.content);
       case 'html':
         return HtmlChatDisplay(htmlContent: data.content as String);
       case 'knowledge':
@@ -52,7 +104,6 @@ class ChatDataDisplay extends ConsumerWidget {
   Widget _buildCategories(BuildContext context, WidgetRef ref, CategoriesData? content) {
     final categories = content?.categories;
     final sampleProducts = content?.sampleProducts;
-
     return Container(
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.all(16),
@@ -99,125 +150,8 @@ class ChatDataDisplay extends ConsumerWidget {
               ),
             ),
             const Gap(8),
-            ...sampleProducts.map((product) => ProductCardWidget(product: product, ref: ref)),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCart(BuildContext context, WidgetRef ref, dynamic content) {
-    final items = content['items'] as List? ?? [];
-    final total = content['total'] as double? ?? 0.0;
-    final itemCount = content['itemCount'] as int? ?? 0;
-
-    return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.orange.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Shopping Cart',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.orange.shade900,
-                  fontSize: 18,
-                ),
-              ),
-              Text(
-                '$itemCount ${itemCount == 1 ? 'item' : 'items'}',
-                style: TextStyle(color: Colors.orange.shade700),
-              ),
-            ],
-          ),
-          const Gap(12),
-
-          if (items.isEmpty)
-            Column(
-              children: [
-                Icon(Icons.shopping_cart_outlined, size: 48, color: Colors.orange.shade400),
-                const Gap(8),
-                Text('Your cart is empty', style: TextStyle(color: Colors.orange.shade700)),
-              ],
-            )
-          else ...[
-            ...items.map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: Colors.grey.shade200,
-                        image: (item['imageUrl'] != null && item['imageUrl'].toString().isNotEmpty)
-                            ? DecorationImage(
-                                image: NetworkImage(item['imageUrl']),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                      ),
-                      child: (item['imageUrl'] == null || item['imageUrl'].toString().isEmpty)
-                          ? const Icon(Icons.image, color: Colors.grey, size: 24)
-                          : null,
-                    ),
-                    const Gap(12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item['name'] ?? 'Unknown Product',
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          const Gap(4),
-                          Text(
-                            'Qty: ${item['quantity']}',
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text('\$${item['price']}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-            ),
-            const Divider(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(
-                  '\$${total.toStringAsFixed(2)}',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const Gap(12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  // Navigate to checkout
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange.shade600,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Proceed to Checkout'),
-              ),
+            ...sampleProducts.map(
+              (product) => ProductCardWidget(product: product, ref: ref, isInChatbot: true),
             ),
           ],
         ],
@@ -230,7 +164,7 @@ class ChatDataDisplay extends ConsumerWidget {
     // if()
     // log(content.toString());
     // final recommendationType = content['recommendationType'] as String?;
-    final recommendationType = 'trending';
+    // final recommendationType = 'trending';
 
     return Container(
       margin: const EdgeInsets.only(top: 8),
@@ -257,7 +191,7 @@ class ChatDataDisplay extends ConsumerWidget {
             ),
             itemCount: products?.length ?? 0,
             itemBuilder: (context, index) {
-              return ProductCardWidget(ref: ref, product: products?[index]);
+              return ProductCardWidget(ref: ref, product: products?[index], isInChatbot: true);
             },
           ),
         ],
@@ -282,7 +216,11 @@ class ChatDataDisplay extends ConsumerWidget {
     }
   }
 
-  Widget _buildCartUpdate(BuildContext context, WidgetRef ref, ProductModel product) {
+  Widget _buildCartUpdate(BuildContext context, WidgetRef ref, dynamic products) {
+    log('build cart update $products');
+    final product = (products['product'] is ProductModel)
+        ? (products['product'] as ProductModel)
+        : ProductModel.fromJson(products['product']);
     return Container(
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.all(12),
@@ -297,7 +235,7 @@ class ChatDataDisplay extends ConsumerWidget {
           const Gap(8),
           Expanded(
             child: Text(
-              'Added "${product.title ?? 'product'}" to cart!',
+              'Added "${product.title}" to cart!',
               style: TextStyle(color: Colors.green.shade800, fontWeight: FontWeight.w500),
             ),
           ),

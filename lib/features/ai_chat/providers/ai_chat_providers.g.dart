@@ -41,7 +41,7 @@ final class AiChatProvider
   }
 }
 
-String _$aiChatHash() => r'fe8dc70d4e19f77bcc3733673d004993033e575b';
+String _$aiChatHash() => r'44051aeef4d758b62d07f48c07d631ead880f71f';
 
 abstract class _$AiChat extends $Notifier<List<ChatMessage>> {
   List<ChatMessage> build();

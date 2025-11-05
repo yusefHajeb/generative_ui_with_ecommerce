@@ -4,9 +4,11 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:generative_ui_with_ecommerce/core/network/api_client.dart';
+import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/cart_model.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/network/dio_client.dart';
+import '../../../features/cart/providers/cart_provider.dart';
 import '../presentation/data/models/chat_message.dart' show ChatMessage, ChatMessageData;
 import '../data/repositories/ai_chat_repository.dart';
 import '../services/gemini_mcp_service.dart';
@@ -190,6 +192,8 @@ class AiChat extends _$AiChat {
   }
 
   void addProductToCart(String productId, ProductModel? product) {
+    ref.read(cartProvider.notifier).addToCart(quantity: 1, product!);
+
     // Add a cart update message
     final cartUpdateMessage = ChatMessage(
       text: 'Added to cart!',
@@ -202,6 +206,35 @@ class AiChat extends _$AiChat {
     );
     state = [...state, cartUpdateMessage];
     _saveMessageToHistory(cartUpdateMessage);
+  }
+
+  void showCart() {
+    // Get current cart data
+    final cartAsync = ref.read(cartProvider);
+    cartAsync.whenData((cart) {
+      // Convert Cart to CartData for chat display
+      final cartItems = cart.products.map((product) {
+        return CartItem(
+          productId: product.id.toString(),
+          name: product.title,
+          price: product.price,
+          quantity: product.quantity,
+          imageUrl: product.thumbnail,
+        );
+      }).toList();
+
+      final cartData = CartData(items: cartItems, total: cart.total, itemCount: cart.totalQuantity);
+
+      // Add a cart message with actual data
+      final cartMessage = ChatMessage(
+        text: 'Here\'s your current cart:',
+        isUser: false,
+        timestamp: DateTime.now(),
+        data: ChatMessageData(type: 'cart', content: cartData.toJson()),
+      );
+      state = [...state, cartMessage];
+      _saveMessageToHistory(cartMessage);
+    });
   }
 }
 
