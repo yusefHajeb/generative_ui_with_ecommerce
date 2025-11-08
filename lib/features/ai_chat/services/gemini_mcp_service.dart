@@ -79,62 +79,73 @@ class GeminiMCPService extends NetworkService {
       final content = candidate['content'];
       final parts = content['parts'] as List;
 
+      // Collect all function calls from the response
+      final functionCalls = <Map<String, dynamic>>[];
       for (var part in parts) {
         if (part.containsKey('functionCall')) {
-          final functionCall = part['functionCall'];
-          final functionName = functionCall['name'] as String;
-          final args = functionCall['args'] as Map<String, dynamic>? ?? {};
-
-          debugPrint('[TOOL] Tool call: $functionName');
-          debugPrint('[ARGS] Arguments: $args');
-
-          final toolResult = await _executeToolCall(functionName, args, userInput);
-          log('tool results ');
-          log(toolResult.data.toString());
-          log(toolResult.message.toString());
-          log(toolResult.type);
-
-          // await _behaviorService.trackInteraction(
-          //   action: 'ai_tool_$functionName',
-          //   context: {'tool': functionName, 'arguments': args, 'userInput': userInput},
-          // );
-
-          // For e-commerce, we'll use structured data instead of HTML
-          if (toolResult.data != null) {
-            return toolResult;
-          }
-          if (toolResult is ErrorResponse) {
-            log('errors toolResults${toolResult.data.toString()}  ${toolResult.type} ');
-          }
-          return toolResult;
+          functionCalls.add(part['functionCall'] as Map<String, dynamic>);
         }
       }
 
-      // Handle text response
-      final textPart = parts.firstWhere(
-        (p) => p.containsKey('text'),
-        orElse: () => {'text': 'I couldn\'t understand that request.'},
-      );
+      // If no function calls, handle text response
+      if (functionCalls.isEmpty) {
+        // Handle text response
+        final textPart = parts.firstWhere(
+          (p) => p.containsKey('text'),
+          orElse: () => {'text': 'I couldn\'t understand that request.'},
+        );
 
-      var textMessage = textPart['text'] as String;
-      textMessage = _cleanMarkdownCodeBlocks(textMessage);
+        var textMessage = textPart['text'] as String;
+        textMessage = _cleanMarkdownCodeBlocks(textMessage);
 
-      // Store conversation context
-      try {
-        _conversationPairs.add({'user': userInput, 'assistant': textMessage});
-        if (_conversationPairs.length > 5) {
-          _conversationPairs.removeAt(0);
+        // Store conversation context
+        try {
+          _conversationPairs.add({'user': userInput, 'assistant': textMessage});
+          if (_conversationPairs.length > 5) {
+            _conversationPairs.removeAt(0);
+          }
+        } catch (e) {
+          debugPrint('[CONTEXT_ERROR] Failed to store conversation pair: $e');
         }
-      } catch (e) {
-        debugPrint('[CONTEXT_ERROR] Failed to store conversation pair: $e');
+
+        return TextResponse(message: textMessage);
       }
 
-      // await _behaviorService.trackInteraction(
-      //   action: 'ai_text_response',
-      //   context: {'responseLength': textMessage.length, 'userInput': userInput},
-      // );
-      log('---------------------');
-      return TextResponse(message: textMessage);
+      // Execute all function calls
+      final toolResults = <AiResponse>[];
+      for (var functionCall in functionCalls) {
+        final functionName = functionCall['name'] as String;
+        final args = functionCall['args'] as Map<String, dynamic>? ?? {};
+
+        final toolResult = await _executeToolCall(functionName, args, userInput);
+        log('tool results for $functionName');
+        log(toolResult.data.toString());
+        log(toolResult.message.toString());
+        log(toolResult.type);
+
+        toolResults.add(toolResult);
+
+        // await _behaviorService.trackInteraction(
+        //   action: 'ai_tool_$functionName',
+        //   context: {'tool': functionName, 'arguments': args, 'userInput': userInput},
+        // );
+      }
+
+      // Handle multiple tool results
+      if (toolResults.length == 1) {
+        // Single tool result - return as before
+        final singleResult = toolResults.first;
+        if (singleResult.data != null) {
+          return singleResult;
+        }
+        if (singleResult is ErrorResponse) {
+          log('errors toolResults${singleResult.data.toString()}  ${singleResult.type} ');
+        }
+        return singleResult;
+      } else {
+        // Multiple tool results - return as combined response with results array
+        return _combineMultipleToolResultsAsArray(toolResults, userInput);
+      }
     } catch (e) {
       debugPrint('[ERROR] MCP TOOL CALLING ERROR: $e');
       return ErrorResponse(message: 'Sorry, I encountered an error: $e');
@@ -349,6 +360,161 @@ class GeminiMCPService extends NetworkService {
         ),
       ),
     ]);
+  }
+
+  // COMBINE MULTIPLE TOOL RESULTS AS ARRAY
+  AiResponse _combineMultipleToolResultsAsArray(List<AiResponse> toolResults, String userInput) {
+    try {
+      // Check if all results are successful tool calls
+      final successfulResults = toolResults
+          .where((result) => result is ToolCallResponse && result.data != null)
+          .toList();
+
+      if (successfulResults.isEmpty) {
+        // If no successful results, return the first error or a generic error
+        final errorResult = toolResults.firstWhere(
+          (result) => result is ErrorResponse,
+          orElse: () => ErrorResponse(message: 'All tool calls failed'),
+        );
+        return errorResult;
+      }
+
+      // Group results by type
+      final recommendations = <Map<String, dynamic>>[];
+      final productGrids = <Map<String, dynamic>>[];
+      final categories = <Map<String, dynamic>>[];
+      final otherResults = <AiResponse>[];
+
+      for (var result in successfulResults) {
+        if (result is ToolCallResponse) {
+          final data = result.data;
+          if (data != null) {
+            final dataType = data['type'] as String?;
+            switch (dataType) {
+              case 'recommendations':
+                recommendations.add(data);
+                break;
+              case 'product_grid':
+                productGrids.add(data);
+                break;
+              case 'categories':
+                categories.add(data);
+                break;
+              case 'text':
+              default:
+                otherResults.add(result);
+                break;
+            }
+          }
+        }
+      }
+
+      // Handle different combinations
+      if (recommendations.length == toolResults.length) {
+        // All are recommendations - combine them
+        return _combineRecommendations(recommendations, userInput);
+      } else if (productGrids.length == toolResults.length) {
+        // All are product grids - combine them
+        return _combineProductGrids(productGrids, userInput);
+      } else if (recommendations.isNotEmpty && productGrids.isNotEmpty) {
+        // Mixed recommendations and product grids
+        return _combineMixedResults(recommendations, productGrids, userInput);
+      } else {
+        // For other combinations, return the first successful result
+        return successfulResults.first;
+      }
+    } catch (e) {
+      debugPrint('[COMBINE_ERROR] Failed to combine tool results: $e');
+      return ErrorResponse(message: 'Failed to process multiple tool results');
+    }
+  }
+
+  AiResponse _combineRecommendations(List<Map<String, dynamic>> recommendations, String userInput) {
+    try {
+      final combinedProducts = <ProductModel>[];
+      final types = <String>{};
+
+      for (var rec in recommendations) {
+        final content = rec['content'];
+        if (content != null) {
+          final recData = RecommendationData.fromJson(content);
+          combinedProducts.addAll(recData.products);
+          types.add(rec['recommendationType'] as String? ?? 'mixed');
+        }
+      }
+
+      final recommendationType = types.length == 1 ? types.first : 'mixed';
+      final message = 'Here are some recommendations for you:';
+
+      return ToolCallResponse(
+        tool: 'get_recommendations',
+        arguments: {'type': recommendationType},
+        message: message,
+        data: {
+          'type': 'recommendations',
+          'recommendationType': recommendationType,
+          'content': RecommendationData(
+            type: recommendationType,
+            products: combinedProducts,
+          ).toJson(),
+        },
+      );
+    } catch (e) {
+      debugPrint('[COMBINE_REC_ERROR] Failed to combine recommendations: $e');
+      return ErrorResponse(message: 'Failed to combine recommendation results');
+    }
+  }
+
+  AiResponse _combineProductGrids(List<Map<String, dynamic>> productGrids, String userInput) {
+    try {
+      final combinedProducts = <ProductModel>[];
+      var totalResults = 0;
+      var hasMore = false;
+
+      for (var grid in productGrids) {
+        final content = grid['content'];
+        if (content != null) {
+          final gridData = ProductGridData.fromJson(content);
+          combinedProducts.addAll(gridData.products);
+          totalResults += gridData.totalResults;
+          hasMore = hasMore || gridData.hasMore;
+        }
+      }
+
+      final message = 'Found $totalResults products matching your search:';
+
+      final searchCriteria = SearchCriteria.fromJson({}); // Empty criteria for combined results
+      final combinedGridData = ProductGridData(
+        products: combinedProducts,
+        totalResults: totalResults,
+        hasMore: hasMore,
+        searchCriteria: searchCriteria,
+      );
+
+      return ToolCallResponse(
+        tool: 'search_products',
+        arguments: {},
+        message: message,
+        data: {'type': 'product_grid', 'content': combinedGridData.toJson()},
+      );
+    } catch (e) {
+      debugPrint('[COMBINE_GRID_ERROR] Failed to combine product grids: $e');
+      return ErrorResponse(message: 'Failed to combine search results');
+    }
+  }
+
+  AiResponse _combineMixedResults(
+    List<Map<String, dynamic>> recommendations,
+    List<Map<String, dynamic>> productGrids,
+    String userInput,
+  ) {
+    // For mixed results, prioritize showing the first result type
+    // You could implement more sophisticated logic here based on your needs
+    if (recommendations.isNotEmpty) {
+      return _combineRecommendations(recommendations, userInput);
+    } else {
+      return _combineProductGrids(productGrids, userInput);
+    }
   }
 
   // TOOL EXECUTION
@@ -768,13 +934,14 @@ class GeminiMCPService extends NetworkService {
       'profile': 'Profile',
       'orders': 'Orders',
       'deals': 'Deals',
+      'products': 'Products',
     };
     final pageName = pageNames[page] ?? page;
     return ToolCallResponse(
       tool: 'navigate_to_page',
       arguments: arguments,
       message: '✓ Navigated to $pageName page',
-      data: {'type': 'navigation', 'page': page},
+      data: {'type': 'navigation', 'content': page},
     );
   }
 

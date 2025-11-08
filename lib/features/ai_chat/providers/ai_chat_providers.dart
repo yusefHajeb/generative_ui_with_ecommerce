@@ -74,24 +74,95 @@ class AiChat extends _$AiChat {
       // Remove loading message
       state = state.where((msg) => !msg.isLoading).toList();
 
-      ChatMessageData? messageData;
-      if (aiResponse.data != null) {
-        messageData = ChatMessageData.fromJson(aiResponse.data!);
-        log('=========');
+      // Handle multiple tool responses - create separate messages for each
+      if (aiResponse.data != null && aiResponse.data is Map<String, dynamic>) {
+        final dataMap = aiResponse.data as Map<String, dynamic>;
+
+        // Check if this is a combined response with multiple results
+        if (dataMap.containsKey('results') && dataMap['results'] is List) {
+          final results = dataMap['results'] as List;
+          String messageText = aiResponse.message ?? 'I found some products for you!';
+
+          // Create first message with text
+          final baseTimestamp = DateTime.now();
+          final firstMessage = ChatMessage(
+            text: messageText,
+            isUser: false,
+            timestamp: baseTimestamp,
+            isError: aiResponse.type == 'error',
+          );
+          state = [...state, firstMessage];
+          _saveMessageToHistory(firstMessage);
+
+          // Create separate messages for each result with incremental timestamps
+          for (var i = 0; i < results.length; i++) {
+            final result = results[i] as Map<String, dynamic>;
+            final messageData = ChatMessageData.fromJson(result);
+
+            // Create meaningful text for each result message based on type
+            String resultText = '';
+            if (messageData.type == 'product_grid') {
+              resultText = 'Here are the products I found:';
+            } else if (messageData.type == 'recommendations') {
+              resultText = 'Here are my recommendations:';
+            } else if (messageData.type == 'categories') {
+              resultText = 'Available categories:';
+            } else if (messageData.type == 'cart') {
+              resultText = 'Your cart:';
+            } else if (messageData.type == 'product_details') {
+              resultText = 'Product details:';
+            } else {
+              resultText = 'Result:';
+            }
+
+            final resultMessage = ChatMessage(
+              text: resultText,
+              isUser: false,
+              timestamp: baseTimestamp.add(
+                Duration(milliseconds: i * 2),
+              ), // Ensure unique timestamps
+              data: messageData,
+              isError: false,
+            );
+            state = [...state, resultMessage];
+            _saveMessageToHistory(resultMessage);
+          }
+        } else {
+          // Single response - handle normally
+          ChatMessageData? messageData;
+          if (aiResponse.data != null) {
+            messageData = ChatMessageData.fromJson(aiResponse.data!);
+            log('=========');
+          }
+          String messageText = aiResponse.message ?? 'I found some products for you!';
+
+          final aiMessage = ChatMessage(
+            text: messageText,
+            isUser: false,
+            timestamp: DateTime.now(),
+            data: messageData,
+            isError: aiResponse.type == 'error',
+          );
+
+          // Add AI message to state
+          state = [...state, aiMessage];
+          _saveMessageToHistory(aiMessage);
+        }
+      } else {
+        // No data - just text response
+        String messageText = aiResponse.message ?? 'I found some products for you!';
+
+        final aiMessage = ChatMessage(
+          text: messageText,
+          isUser: false,
+          timestamp: DateTime.now(),
+          isError: aiResponse.type == 'error',
+        );
+
+        // Add AI message to state
+        state = [...state, aiMessage];
+        _saveMessageToHistory(aiMessage);
       }
-      String messageText = aiResponse.message ?? 'I found some products for you!';
-
-      final aiMessage = ChatMessage(
-        text: messageText,
-        isUser: false,
-        timestamp: DateTime.now(),
-        data: messageData,
-        isError: aiResponse.type == 'error',
-      );
-
-      // Add AI message to state
-      state = [...state, aiMessage];
-      _saveMessageToHistory(aiMessage);
 
       // Convert AiResponse back to Map for return
       return aiResponse.toJson();
@@ -129,8 +200,10 @@ class AiChat extends _$AiChat {
           'Hello! I\'m your shopping assistant. I can help you find products, browse categories, and discover amazing deals. What would you like to shop for today?',
       isUser: false,
       timestamp: DateTime.now(),
+      data: ChatMessageData(type: 'wellcom', content: ''),
     );
     state = [...state, welcomeMessage];
+
     _saveMessageToHistory(welcomeMessage);
   }
 

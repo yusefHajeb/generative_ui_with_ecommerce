@@ -1,4 +1,4 @@
-  import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
+import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
 
 import '../../../../../core/network/base_model.dart';
 import '../../../data/models/category_model.dart';
@@ -131,6 +131,13 @@ class ChatMessageData extends BaseModel {
   KnowledgeData? get asKnowledge {
     if (type == 'knowledge' && content is Map<String, dynamic>) {
       return KnowledgeData.fromJson(content);
+    }
+    return null;
+  }
+
+  String? get pageName {
+    if (type == 'navigation' && content is String) {
+      return content;
     }
     return null;
   }

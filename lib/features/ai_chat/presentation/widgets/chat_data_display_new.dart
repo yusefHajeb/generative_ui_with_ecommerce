@@ -3,6 +3,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:generative_ui_with_ecommerce/core/theme/app_color.dart';
+import 'package:generative_ui_with_ecommerce/core/widgets/chip_button.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/category_model.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/recommendations_data.dart';
@@ -11,6 +13,8 @@ import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widge
     show ProductCardWidget;
 import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/product_grid_widget.dart'
     show ProductGridWidget;
+import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/wellcom_widget.dart';
+import 'package:generative_ui_with_ecommerce/features/ai_chat/providers/ai_chat_providers.dart';
 import 'package:generative_ui_with_ecommerce/features/cart/data/models/cart_model.dart' show Cart;
 import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/base_provider_widget.dart';
@@ -31,7 +35,7 @@ class ChatDataDisplay extends ConsumerWidget {
     final cartAsync = ref.watch(cartProvider);
     final cartTotalPrice = ref.watch(cartTotalPriceProvider);
     switch (data.type) {
-      case 'product_grid':  
+      case 'product_grid':
         return ProductGridWidget(productGrid: data.asProductGrid);
       case 'product_details':
         return ProductDetailsCard(ref: ref, product: data.asProductDetails);
@@ -66,7 +70,7 @@ class ChatDataDisplay extends ConsumerWidget {
             if (cart.products.isEmpty) {
               return Text('data');
             }
-            return CartBodyWidget(
+            return CartBodyWidget(  
               cart: cart,
               totalPrice: cartTotalPrice,
               onQuantityChanged: (productId, quantity) {
@@ -91,9 +95,22 @@ class ChatDataDisplay extends ConsumerWidget {
         return HtmlChatDisplay(htmlContent: data.content as String);
       case 'knowledge':
         return KnowledgeWidget(chatMessageData: data);
+      case 'wellcom':
+        return Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(color: AppColors.primary10),
+          child: WellcomWidget(),
+        );
       case 'theme_change':
       case 'navigation':
-        return const SizedBox.shrink();
+        final page = data.pageName ?? '';
+        // support a "directory:" prefix to navigate to a directory route with path as query param
+        // context.push(page);
+        return TextButton.icon(
+          onPressed: page.isNotEmpty ? () => context.push('/$page') : null,
+          icon: const Icon(Icons.open_in_new),
+          label: Text(page.isNotEmpty ? 'Open page' : 'Invalid page'),
+        );
       case 'error':
         return Container(color: Colors.red, child: Text('errors'));
       default:
@@ -106,34 +123,40 @@ class ChatDataDisplay extends ConsumerWidget {
     final sampleProducts = content?.sampleProducts;
     return Container(
       margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: Colors.purple.shade50,
+        color: AppColors.primary10,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.purple.shade200),
+        border: Border.all(color: AppColors.primary500),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Shop by Category',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.purple.shade900,
+          Padding(
+            padding: EdgeInsetsGeometry.all(8),
+            child: Text(
+              'Shop by Category',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary500,
+              ),
             ),
           ),
           const Gap(12),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-
             child: Row(
-              spacing: 8,
+              spacing: 4,
               children:
                   categories?.map((category) {
-                    return Chip(
-                      label: Text(category.name.toString()),
-                      backgroundColor: Colors.purple.shade100,
+                    return ChipButton(
+                      onPressed: () {
+                        ref.read(aiChatProvider.notifier).sendMessage(category.name);
+                      },
+                      label: category.name.toString(),
+                      textColor: AppColors.primary50,
+                      backgroundColor: AppColors.primary400,
                     );
                   }).toList() ??
                   [],
@@ -161,10 +184,6 @@ class ChatDataDisplay extends ConsumerWidget {
 
   Widget _buildRecommendations(BuildContext context, WidgetRef ref, RecommendationData? content) {
     final products = content?.products;
-    // if()
-    // log(content.toString());
-    // final recommendationType = content['recommendationType'] as String?;
-    // final recommendationType = 'trending';
 
     return Container(
       margin: const EdgeInsets.only(top: 8),
@@ -197,23 +216,6 @@ class ChatDataDisplay extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  String _getRecommendationTitle(String? type) {
-    switch (type) {
-      case 'trending':
-        return '🔥 Trending Now';
-      case 'similar':
-        return '🛍️ Similar Products';
-      case 'personalized':
-        return '⭐ Recommended For You';
-      case 'featured':
-        return '🌟 Featured Products';
-      case 'new_arrivals':
-        return '🆕 New Arrivals';
-      default:
-        return 'Recommended Products';
-    }
   }
 
   Widget _buildCartUpdate(BuildContext context, WidgetRef ref, dynamic products) {

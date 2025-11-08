@@ -14,7 +14,6 @@ import 'package:generative_ui_with_ecommerce/features/products/presentation/scre
 import 'package:generative_ui_with_ecommerce/features/search/presentation/screens/search_screen.dart';
 
 import '../../../core/widgets/liquid_glass_widget.dart' show LiquidGlassWidget;
-import '../../ai_chat/presentation/screens/ai_chat_screen_new.dart';
 
 class MainScreen extends ConsumerWidget {
   const MainScreen({super.key});
@@ -55,7 +54,7 @@ class MainScreen extends ConsumerWidget {
       case 0:
         return const ProductsScreen();
       case 1:
-        return const AiChatPage();
+        return Container();
       case 2:
         return const SearchScreen();
       case 3:

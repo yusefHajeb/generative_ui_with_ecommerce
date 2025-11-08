@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:generative_ui_with_ecommerce/core/extentions/app_extentions.dart';
+import 'package:generative_ui_with_ecommerce/core/theme/app_color.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/knowledge_model.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/about_widget.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/help_card.dart';
@@ -33,57 +34,133 @@ class KnowledgeWidget extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.shade200),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary50.withOpacity(0.9),
+            AppColors.primary100.withOpacity(0.7),
+            AppColors.primary200.withOpacity(0.5),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary400.withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+        border: Border.all(color: AppColors.primary300.withOpacity(0.4), width: 1.5),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            knowledgeData.title,
-            style: TextStyle(
-              color: Colors.blue.shade900,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          // Enhanced header with icon
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary400.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.primary500.withOpacity(0.3)),
+                ),
+                child: Icon(Icons.lightbulb_outline_rounded, color: AppColors.primary500, size: 24),
+              ),
+              const Gap(12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      knowledgeData.title,
+                      style: TextStyle(
+                        color: AppColors.primary500,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    if (knowledgeData.tagline != null) ...[
+                      const Gap(4),
+                      Text(
+                        knowledgeData.tagline!,
+                        style: TextStyle(
+                          color: AppColors.primary400,
+                          fontSize: 14,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ),
-          const Gap(16),
+          const Gap(20),
           if (features != null)
             ...features.map(
-              (feature) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+              (feature) => Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.primary200.withOpacity(0.4)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary400.withOpacity(0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 48,
+                      height: 48,
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade100,
-                        borderRadius: BorderRadius.circular(10),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.primary300.withOpacity(0.3),
+                            AppColors.primary400.withOpacity(0.4),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.primary500.withOpacity(0.2)),
                       ),
                       child: Center(
-                        child: Text(feature.icon, style: const TextStyle(fontSize: 20)),
+                        child: Text(feature.icon, style: const TextStyle(fontSize: 22)),
                       ),
                     ),
-                    const Gap(12),
+                    const Gap(16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             feature.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                            style: TextStyle(
+                              color: AppColors.primary500,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              letterSpacing: -0.3,
+                            ),
                           ),
-                          const Gap(4),
+                          const Gap(6),
                           Text(
                             feature.description,
                             style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade700,
-                              height: 1.4,
+                              fontSize: 14,
+                              color: AppColors.primary400,
+                              height: 1.5,
+                              letterSpacing: 0.1,
                             ),
                           ),
                         ],
