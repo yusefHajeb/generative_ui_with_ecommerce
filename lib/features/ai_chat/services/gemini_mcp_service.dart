@@ -565,7 +565,16 @@ class GeminiMCPService extends NetworkService {
       final total = data['total'] as int? ?? products.length;
 
       debugPrint('[PRODUCT_SEARCH] Found $total products');
-
+      if (products.length == 1) {
+        return ToolCallResponse(
+          tool: 'product_details',
+          arguments: arguments,
+          data: {
+            'type': 'product_details',
+            'content': ProductModel.fromJson(products.first).toJson(),
+          },
+        );
+      }
       // Enhance products with additional data if needed
       final enhancedProducts = await _enhanceProductsData(products);
 
@@ -764,7 +773,7 @@ class GeminiMCPService extends NetworkService {
             tool: 'get_product_details',
             arguments: arguments,
             message: 'Here are the details for ${product['title']}:',
-            data: {'type': 'product_details', 'product': product},
+            data: {'type': 'product_details', 'content': product},
           );
         }
       }
@@ -782,7 +791,6 @@ class GeminiMCPService extends NetworkService {
 
           final products = data['products'];
           if (products != null && products != []) {
-            log(data.toString());
             return ToolCallResponse(
               tool: 'get_product_details',
               arguments: arguments,
@@ -813,12 +821,16 @@ class GeminiMCPService extends NetworkService {
         return await manageCartService.viewCart();
       case 'add':
         final productId = arguments['productId'] as String?;
-        final quantity = (arguments['quantity'] as num?)?.toInt() ?? 1;
-        final productData = arguments['productData'] as Map<String, dynamic>?;
+        final productData = arguments['productData']['title'] as String?;
 
-        if (productId != null && productData != null) {
+        final quantity = (arguments['quantity'] as num?)?.toInt() ?? 1;
+
+        if (productId != null || productData != null) {
           log('=======add to cart ');
-          return await manageCartService.addToCart(productId, productData, quantity);
+          final result = await _searchProducts({'query': productData ?? productId});
+          if (result is! ErrorResponse) {
+            return await manageCartService.addToCart(productId ?? '', result.data ?? {}, quantity);
+          }
         }
         return ErrorResponse(message: 'Please specify which product to add to cart.');
 

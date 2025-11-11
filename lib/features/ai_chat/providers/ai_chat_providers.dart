@@ -133,6 +133,7 @@ class AiChat extends _$AiChat {
           if (aiResponse.data != null) {
             messageData = ChatMessageData.fromJson(aiResponse.data!);
             log('=========');
+            // log(messageData.toJson().toString());
           }
           String messageText = aiResponse.message ?? 'I found some products for you!';
 

@@ -1,5 +1,4 @@
 import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/ai_response.dart';
-import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
 import 'package:generative_ui_with_ecommerce/features/cart/data/repositories/cart_repository.dart';
 
 /// Service for managing cart operations in AI chat context
@@ -56,7 +55,7 @@ class ManageCartService {
   ) async {
     try {
       // Convert productData to ProductModel
-      final product = ProductModel.fromJson(productData);
+      final product = productData['product_details'];
 
       final result = await _cartRepository.addToCart(product, quantity);
 

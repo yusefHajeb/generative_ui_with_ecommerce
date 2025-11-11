@@ -70,7 +70,7 @@ class ChatDataDisplay extends ConsumerWidget {
             if (cart.products.isEmpty) {
               return Text('data');
             }
-            return CartBodyWidget(  
+            return CartBodyWidget(
               cart: cart,
               totalPrice: cartTotalPrice,
               onQuantityChanged: (productId, quantity) {
@@ -90,7 +90,8 @@ class ChatDataDisplay extends ConsumerWidget {
       case 'recommendations':
         return _buildRecommendations(context, ref, data.asRecommendations);
       case 'cart_update':
-        return _buildCartUpdate(context, ref, data.content);
+        // return CartUpdateWidget(action:data.type , product: ,)
+        return BuildCartUpdate(context: context, ref: ref, products: data.content);
       case 'html':
         return HtmlChatDisplay(htmlContent: data.content as String);
       case 'knowledge':
@@ -217,8 +218,22 @@ class ChatDataDisplay extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _buildCartUpdate(BuildContext context, WidgetRef ref, dynamic products) {
+class BuildCartUpdate extends StatelessWidget {
+  const BuildCartUpdate({
+    super.key,
+    required this.context,
+    required this.ref,
+    required this.products,
+  });
+
+  final BuildContext context;
+  final WidgetRef ref;
+  final dynamic products;
+
+  @override
+  Widget build(BuildContext context) {
     log('build cart update $products');
     final product = (products['product'] is ProductModel)
         ? (products['product'] as ProductModel)
