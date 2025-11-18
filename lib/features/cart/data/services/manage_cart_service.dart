@@ -15,17 +15,7 @@ class ManageCartService {
       return cartResult.fold(
         (failure) => ErrorResponse(message: 'Failed to load cart: ${failure.message}'),
         (cart) {
-          final cartItems = cart.products.map((cartProduct) {
-            return {
-              'id': cartProduct.id,
-              'title': cartProduct.title,
-              'price': cartProduct.price,
-              'quantity': cartProduct.quantity,
-              'total': cartProduct.total,
-              'thumbnail': cartProduct.thumbnail,
-            };
-          }).toList();
-
+          final cartItems = cart.products;
           return ToolCallResponse(
             tool: 'manage_cart',
             arguments: {'action': 'view'},

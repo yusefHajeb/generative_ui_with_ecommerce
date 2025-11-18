@@ -11,10 +11,13 @@ import 'package:generative_ui_with_ecommerce/features/ai_chat/services/tool_conv
 import 'package:http/http.dart' as http;
 import 'package:generative_ui_with_ecommerce/features/cart/data/repositories/cart_repository.dart';
 import 'package:generative_ui_with_ecommerce/features/cart/data/services/manage_cart_service.dart';
+import 'package:generative_ui_with_ecommerce/features/cart/data/datasources/local/cart_local_data_source_impl.dart';
+import 'package:generative_ui_with_ecommerce/features/cart/data/datasources/remote/cart_remote_data_source_impl.dart';
 // import 'package:generative_ui_with_ecommerce/features/products/data/models/product.dart';
 import '../data/models/ai_response.dart';
 import '../data/models/category_model.dart';
 import '../data/models/search_result_model.dart';
+import 'tool_response_factory.dart';
 
 // import 'tool_convert.dart';
 typedef MCPToolCallingService = GeminiMCPService;
@@ -445,19 +448,10 @@ class GeminiMCPService extends NetworkService {
 
       final recommendationType = types.length == 1 ? types.first : 'mixed';
       final message = 'Here are some recommendations for you:';
-
-      return ToolCallResponse(
-        tool: 'get_recommendations',
+      return ToolResponseFactory.recommendations(
         arguments: {'type': recommendationType},
         message: message,
-        data: {
-          'type': 'recommendations',
-          'recommendationType': recommendationType,
-          'content': RecommendationData(
-            type: recommendationType,
-            products: combinedProducts,
-          ).toJson(),
-        },
+        data: RecommendationData(type: recommendationType, products: combinedProducts),
       );
     } catch (e) {
       debugPrint('[COMBINE_REC_ERROR] Failed to combine recommendations: $e');
@@ -491,11 +485,10 @@ class GeminiMCPService extends NetworkService {
         searchCriteria: searchCriteria,
       );
 
-      return ToolCallResponse(
-        tool: 'search_products',
+      return ToolResponseFactory.productGrid(
         arguments: {},
         message: message,
-        data: {'type': 'product_grid', 'content': combinedGridData.toJson()},
+        data: combinedGridData,
       );
     } catch (e) {
       debugPrint('[COMBINE_GRID_ERROR] Failed to combine product grids: $e');
@@ -596,12 +589,10 @@ class GeminiMCPService extends NetworkService {
         searchCriteria: searchCriteria,
       );
 
-      return ToolCallResponse(
-        tool: 'search_products',
-
+      return ToolResponseFactory.productGrid(
         arguments: arguments,
         message: message,
-        data: {'type': 'product_grid', 'content': productGridData.toJson()},
+        data: productGridData,
       );
     } catch (e) {
       debugPrint('[PRODUCT_SEARCH] Error: $e');
@@ -724,12 +715,7 @@ class GeminiMCPService extends NetworkService {
       if (arguments['showProducts'] != null && arguments['showProducts'] == true) {
         categoriesData = await _getSampleProductsForCategories(categories);
       }
-      return ToolCallResponse(
-        tool: 'get_categories',
-        arguments: arguments,
-        message: 'Here are our product categories:',
-        data: {'type': 'categories', 'content': categoriesData.toJson()},
-      );
+      return ToolResponseFactory.categories(arguments: arguments, data: categoriesData);
     } catch (e) {
       debugPrint('[CATEGORIES] Error: $e');
       return ErrorResponse(message: 'Sorry, I couldn\'t fetch categories at the moment.');
@@ -769,11 +755,10 @@ class GeminiMCPService extends NetworkService {
         final response = await http.get(Uri.parse('$dummyJsonApi/products/$productId'));
         if (response.statusCode == 200) {
           final product = jsonDecode(response.body);
-          return ToolCallResponse(
-            tool: 'get_product_details',
+          return ToolResponseFactory.productDetails(
             arguments: arguments,
-            message: 'Here are the details for ${product['title']}:',
-            data: {'type': 'product_details', 'content': product},
+            productData: product,
+            productName: product['title'],
           );
         }
       }
@@ -791,14 +776,10 @@ class GeminiMCPService extends NetworkService {
 
           final products = data['products'];
           if (products != null && products != []) {
-            return ToolCallResponse(
-              tool: 'get_product_details',
+            return ToolResponseFactory.productDetails(
               arguments: arguments,
-              message: 'Here are the details for ${products.first['title']}:',
-              data: {
-                'type': 'product_details',
-                'product': products is List ? products.first : data['product'],
-              },
+              productData: products is List ? products.first : data['product'],
+              productName: products.first['title'],
             );
           }
         }
@@ -813,7 +794,11 @@ class GeminiMCPService extends NetworkService {
 
   // CART MANAGEMENT
   Future<AiResponse> _manageCart(Map<String, dynamic> arguments) async {
-    final manageCartService = ManageCartService(CartRepository(apiClient));
+    final localDataSource = CartLocalDataSourceImpl();
+    final remoteDataSource = CartRemoteDataSourceImpl(apiClient);
+    final manageCartService = ManageCartService(
+      CartRepository(localDataSource: localDataSource, remoteDataSource: remoteDataSource),
+    );
     final action = arguments['action'] as String;
 
     switch (action) {
@@ -918,15 +903,10 @@ class GeminiMCPService extends NetworkService {
       //     },
       //   ),
       // );
-      return ToolCallResponse(
-        tool: 'get_recommendations',
+      return ToolResponseFactory.recommendations(
         arguments: arguments,
         message: message,
-        data: {
-          'type': 'recommendations',
-          'recommendationType': type,
-          'content': RecommendationData(type: type, products: products).toJson(),
-        },
+        data: RecommendationData(type: type, products: products),
       );
     } catch (e) {
       debugPrint('[RECOMMENDATIONS] Error: $e');
@@ -949,11 +929,10 @@ class GeminiMCPService extends NetworkService {
       'products': 'Products',
     };
     final pageName = pageNames[page] ?? page;
-    return ToolCallResponse(
-      tool: 'navigate_to_page',
+    return ToolResponseFactory.navigation(
       arguments: arguments,
-      message: '✓ Navigated to $pageName page',
-      data: {'type': 'navigation', 'content': page},
+      page: page ?? '',
+      pageName: pageName ?? '',
     );
   }
 
@@ -1033,12 +1012,10 @@ class GeminiMCPService extends NetworkService {
     };
 
     final knowledge = knowledgeBase[topic] ?? knowledgeBase['about']!;
-
-    return ToolCallResponse(
-      tool: 'get_knowledge',
+    return ToolResponseFactory.knowledge(
       arguments: arguments,
+      knowledgeData: knowledge,
       message: 'Here\'s information about $topic',
-      data: {'type': 'knowledge', 'content': knowledge},
     );
   }
 
