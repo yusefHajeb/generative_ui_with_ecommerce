@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:generative_ui_with_ecommerce/core/theme/app_color.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
-import 'package:generative_ui_with_ecommerce/features/ai_chat/providers/ai_chat_providers.dart';
+import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/providers/ai_chat_providers.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/routes/routes.dart';

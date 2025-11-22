@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:generative_ui_with_ecommerce/core/theme/app_color.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/message_content.dart'
     show MessageContentWidget;
-import '../data/models/chat_message.dart';
+import '../../data/models/chat_message.dart';
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;

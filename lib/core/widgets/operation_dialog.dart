@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
-import 'package:generative_ui_with_ecommerce/features/ai_chat/providers/ai_chat_providers.dart';
 import 'package:generative_ui_with_ecommerce/features/cart/data/models/cart_model.dart';
 import 'package:generative_ui_with_ecommerce/features/cart/providers/cart_provider.dart';
+
+import '../../features/ai_chat/presentation/providers/ai_chat_providers.dart';
 
 class OperationDialog {
   static Future<void> showCartOperationDialog(

@@ -1,30 +1,33 @@
-// ai_chat_provider.dart - REFACTORED
+// ai_chat_provider.dart - REFACTORED WITH DEPENDENCY INJECTION
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:generative_ui_with_ecommerce/core/network/api_client.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/cart_model.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
+import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/providers/service_providers.dart'
+    show geminiAiServiceProvider;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../../core/network/dio_client.dart';
-import '../../../features/cart/providers/cart_provider.dart';
-import '../presentation/data/models/chat_message.dart' show ChatMessage, ChatMessageData;
-import '../data/repositories/ai_chat_repository.dart';
-import '../services/gemini_mcp_service.dart';
-import '../services/chat_history_service.dart';
+import '../../../../core/network/api_client.dart' show ApiClient;
+import '../../../../core/network/dio_client.dart' show DioClientFactory;
+import '../../../../features/cart/providers/cart_provider.dart';
+import '../../data/models/chat_message.dart' show ChatMessage, ChatMessageData;
+import '../../domain/interfaces/i_ai_chat_service.dart';
+import '../../services/chat_history_service.dart';
+
 
 part 'ai_chat_providers.g.dart';
 
 @Riverpod()
 class AiChat extends _$AiChat {
-  late final AiChatRepository _aiChatRepository;
+  late final IAiChatService _aiChatService;
   ChatHistoryService? _historyService;
   bool _isInitialized = false;
 
   @override
   List<ChatMessage> build() {
-    _aiChatRepository = ref.watch(aiChatRepository);
+    // Use the AI chat service directly (no repository layer)
+    _aiChatService = ref.watch(geminiAiServiceProvider);
     _initializeHistory();
     return [];
   }
@@ -66,8 +69,8 @@ class AiChat extends _$AiChat {
     state = [...state, loadingMessage];
 
     try {
-      // Process through our e-commerce AI repository
-      final aiResponse = await _aiChatRepository.processMessage(message);
+      // Process through our AI chat service directly
+      final aiResponse = await _aiChatService.processMessage(message, []);
 
       debugPrint('[PROVIDER] Response type: ${aiResponse.type}');
 
@@ -320,9 +323,4 @@ final searchProducts = Provider<ApiClient>((ref) {
     enableRetry: true,
     enableCache: false,
   );
-});
-
-final giminyMCPProvider = Provider<GeminiMCPService>((ref) {
-  final apiClient = ref.watch(searchProducts);
-  return GeminiMCPService(apiClient);
 });

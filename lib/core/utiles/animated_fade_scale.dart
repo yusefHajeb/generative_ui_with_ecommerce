@@ -70,7 +70,7 @@ class _SliverAnimatedFadeScaleState extends State<SliverAnimatedFadeScale>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
+  // late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
@@ -82,10 +82,10 @@ class _SliverAnimatedFadeScaleState extends State<SliverAnimatedFadeScale>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    // _scaleAnimation = Tween<double>(
+    //   begin: 0.8,
+    //   end: 1.0,
+    // ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _controller.forward();
   }

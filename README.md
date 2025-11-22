@@ -121,13 +121,46 @@ A complete e-commerce product browsing experience:
 - Button to access products screen
 - Clean, minimal design
 
+### 🤖 AI Chat Feature
+
+An intelligent shopping assistant powered by Google's Gemini API:
+
+#### Architecture
+- **Domain Layer**: Clean interfaces for services (IProductSearchService, IRecommendationService, ICartManagementService)
+- **Service Layer**: 
+  - `GeminiMCPService`: Handles Gemini API communication and tool calling
+  - `ProductSearchService`: Product search with DummyJSON API
+  - `ToolRegistry`: Manages AI tool definitions
+  - `ToolExecutor`: Executes tool calls with proper error handling
+- **Data Layer**: Models for AI responses, products, categories, and search results
+
+#### Key Features
+- **Natural Language Processing**: Understand user queries in natural language
+- **Tool Calling**: AI can execute actions like:
+  - Search products with filters (category, price, rating, brand)
+  - Get product details and categories
+  - Manage shopping cart (add, remove, view, clear)
+  - Provide personalized recommendations
+  - Navigate app and change theme
+- **Conversation Context**: Maintains chat history for contextual responses
+- **Error Handling**: Graceful error handling with user-friendly messages
+- **Dependency Injection**: Proper provider hierarchy with Riverpod
+
+#### Technical Implementation
+- **Clean Architecture**: Separation of concerns with domain, data, and presentation layers
+- **Result Type Pattern**: Explicit error handling with `Result<T>` type
+- **Configuration Service**: Externalized API keys and configuration
+- **Service Providers**: Proper dependency injection following cart feature pattern
+
 ### 🔮 Future Features
 
-- **AI Chat**: Placeholder for AI-powered features
-- **Shopping Cart**: Add/remove products
+- **Shopping Cart UI**: Enhanced cart management interface
 - **User Authentication**: Login/signup flow
-- **Product Details**: Detailed product view
-- **Search**: Product search functionality
+- **Product Details**: Detailed product view with reviews
+- **Search**: Advanced product search functionality
+- **Recommendations**: AI-powered product recommendations
+- **Structured Logging**: Comprehensive logging infrastructure
+- **Property-Based Testing**: Extensive test coverage with PBT
 
 ## 🛠️ Technical Stack
 

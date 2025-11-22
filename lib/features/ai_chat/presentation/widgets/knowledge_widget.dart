@@ -7,7 +7,7 @@ import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/knowle
 import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/about_widget.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/help_card.dart';
 
-import '../data/models/chat_message.dart';
+import '../../data/models/chat_message.dart';
 
 class KnowledgeWidget extends ConsumerWidget {
   final ChatMessageData chatMessageData;

@@ -33,9 +33,9 @@ class ToolCallResponse extends AiResponse {
   ToolCallResponse({
     required this.tool,
     required this.arguments,
-    String? message,
-    Map<String, dynamic>? data,
-  }) : super(type: tool, message: message, data: data);
+    super.message,
+    super.data,
+  }) : super(type: tool);
   // todo : copyWith
   factory ToolCallResponse.fromJson(Map<String, dynamic> json) {
     return ToolCallResponse(

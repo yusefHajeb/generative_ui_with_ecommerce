@@ -1,7 +1,6 @@
 import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/ai_response.dart';
 import 'package:generative_ui_with_ecommerce/features/cart/data/repositories/cart_repository.dart';
 
-/// Service for managing cart operations in AI chat context
 class ManageCartService {
   final CartRepository _cartRepository;
 

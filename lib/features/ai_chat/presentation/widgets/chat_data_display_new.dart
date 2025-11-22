@@ -14,14 +14,14 @@ import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widge
 import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/product_grid_widget.dart'
     show ProductGridWidget;
 import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/wellcom_widget.dart';
-import 'package:generative_ui_with_ecommerce/features/ai_chat/providers/ai_chat_providers.dart';
+import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/providers/ai_chat_providers.dart';
 import 'package:generative_ui_with_ecommerce/features/cart/data/models/cart_model.dart' show Cart;
 import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/base_provider_widget.dart';
 import '../../../cart/data/models/cart_product.dart';
 import '../../../cart/providers/cart_provider.dart';
 import '../../../cart/presentation/widgets/card_body_widget.dart';
-import '../data/models/chat_message.dart';
+import '../../data/models/chat_message.dart';
 import 'html_chat_display.dart';
 import 'product_details_card.dart';
 

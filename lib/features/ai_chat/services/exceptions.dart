@@ -1,4 +1,5 @@
 /// Custom exceptions for AI Chat feature
+library;
 
 class GeminiApiException implements Exception {
   final String message;

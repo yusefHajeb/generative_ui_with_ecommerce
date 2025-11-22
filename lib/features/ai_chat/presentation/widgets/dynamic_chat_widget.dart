@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:generative_ui_with_ecommerce/core/extentions/app_extentions.dart';
 import 'package:generative_ui_with_ecommerce/core/theme/app_color.dart';
-import '../../providers/ai_chat_providers.dart';
+import '../providers/ai_chat_providers.dart' show aiChatProvider;
 import 'chat_history_drwer.dart';
 import 'chat_input_area.dart';
 import 'chat_message_list.dart';

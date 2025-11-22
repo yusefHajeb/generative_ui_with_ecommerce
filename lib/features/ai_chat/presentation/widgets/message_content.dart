@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:generative_ui_with_ecommerce/core/extentions/app_extentions.dart';
-import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/data/models/chat_message.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/chat_data_display_new.dart';
+
+import '../../data/models/chat_message.dart';
 
 class MessageContentWidget extends StatelessWidget {
   final bool isUser;

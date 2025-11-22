@@ -1,0 +1,33 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Development",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define=GEMINI_API_KEY=AIzaSyDqn-m4hiyYESH_PoMU-jOzZ2tSTPgGO58",
+        "--dart-define=GEMINI_MODEL=gemini-2.0-flash",
+        "--dart-define=GEMINI_BASE_URL=https://generativelanguage.googleapis.com/v1beta",
+        "--dart-define=FAKE_STORE_API_URL=https://fakestoreapi.com",
+        "--dart-define=DUMMY_JSON_API_URL=https://dummyjson.com",
+        "--dart-define=MAX_RETRIES=3"
+      ]
+    },
+    {
+      "name": "Production",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define=GEMINI_API_KEY=${env:GEMINI_API_KEY}",
+        "--dart-define=GEMINI_MODEL=gemini-2.0-flash",
+        "--dart-define=GEMINI_BASE_URL=https://generativelanguage.googleapis.com/v1beta",
+        "--dart-define=FAKE_STORE_API_URL=https://fakestoreapi.com",
+        "--dart-define=DUMMY_JSON_API_URL=https://dummyjson.com",
+        "--dart-define=MAX_RETRIES=3"
+      ]
+    }
+  ]
+}
