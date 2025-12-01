@@ -7,12 +7,14 @@ class ChatInputArea extends StatelessWidget {
   final FocusNode focusNode;
   final VoidCallback onSend;
   final VoidCallback? onClear;
+  final bool isChatLimitReached;
 
   const ChatInputArea({
     super.key,
     required this.controller,
     required this.focusNode,
     required this.onSend,
+    required this.isChatLimitReached,
     this.onClear,
   });
 
@@ -30,6 +32,8 @@ class ChatInputArea extends StatelessWidget {
         children: [
           if (onClear != null)
             IconButton(
+              iconSize: 40,
+              onPressed: onClear,
               style: ButtonStyle(
                 backgroundColor: WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
                   if (states.contains(WidgetState.disabled)) {
@@ -38,13 +42,10 @@ class ChatInputArea extends StatelessWidget {
                   return AppColors.primary50;
                 }),
               ),
-              // color: AppColors.primary10,
-              onPressed: onClear,
               icon: Container(
-                width: 90,
+                width: 100,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  // color: AppColors.primary10,
                   image: DecorationImage(image: AssetImage(Constantnts.record)),
                 ),
               ),
@@ -52,8 +53,8 @@ class ChatInputArea extends StatelessWidget {
 
           Expanded(
             child: Container(
-              height: 44,
-              padding: const EdgeInsets.only(left: 16, right: 6, bottom: 2),
+              // height: 44,
+              padding: const EdgeInsets.only(left: 16, right: 6, bottom: 0),
               decoration: BoxDecoration(
                 color: Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(24),
@@ -61,8 +62,8 @@ class ChatInputArea extends StatelessWidget {
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Flexible(
                     child: Align(
@@ -70,24 +71,32 @@ class ChatInputArea extends StatelessWidget {
                       child: TextFormField(
                         controller: controller,
                         focusNode: focusNode,
-                        decoration: const InputDecoration(
+
+                        enabled: !isChatLimitReached,
+                        decoration: InputDecoration(
                           fillColor: Color(0xFFF5F5F5),
-                          constraints: BoxConstraints(maxHeight: 30),
+
+                          constraints: BoxConstraints(maxHeight: 50, minHeight: 20),
                           focusedBorder: InputBorder.none,
                           hintStyle: TextStyle(color: Color(0xFF303030), fontSize: 14, height: 1.4),
-                          hintText: 'Ask me about products...',
+                          hintText: isChatLimitReached
+                              ? 'Chat limit reached - Start a new chat'
+                              : 'Ask me about products...',
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.zero,
                         ),
-                        style: TextStyle(color: const Color.fromARGB(255, 53, 50, 50)),
+                        // minLines: null,
+                        maxLines: null,
+
                         textInputAction: TextInputAction.send,
+                        style: TextStyle(color: const Color.fromARGB(255, 53, 50, 50)),
                         keyboardType: TextInputType.multiline,
                         onFieldSubmitted: (_) => onSend(),
                       ),
                     ),
                   ),
                   Container(
-                    width: 34,
+                    width: 37,
                     decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                     child: IconButton(
                       onPressed: onSend,

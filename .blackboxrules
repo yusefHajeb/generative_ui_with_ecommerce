@@ -1,0 +1,84 @@
+## Screen Size Limits (STRICT)
+- **Maximum 100 lines per screen file**
+- **Maximum 85 characters per line**
+- If screen exceeds limits, extract components to separate files
+- Create individual widget files in appropriate directories
+- Import and use extracted widgets in the main screen
+
+### Screen Structure
+```dart
+// Main screen file (max 100 lines)
+class FeatureScreen extends StatelessWidget {
+  // Only essential screen logic
+  // Extract complex widgets to separate files
+}
+
+// Extracted widgets (create individual files)
+class FeatureHeader extends StatelessWidget { }
+class FeatureContent extends StatelessWidget { }
+class FeatureFooter extends StatelessWidget { }
+
+
+### Widget Extraction Rules
+1. **Extract when screen exceeds 100 lines**
+2. **Extract complex UI components (>20 lines)**
+3. **Extract reusable widgets**
+4. **Create files in appropriate directories:**
+   - `lib/core/widgets/` - for core reusable widgets
+   - `lib/features/[feature]/presentation/widgets/` - for feature-specific widgets
+
+
+### Code Quality Rules
+1. **Line Length**: Maximum 85 characters per line
+2. **File Length**: Maximum 100 lines per screen file
+3. **Function Length**: Maximum 20 lines per function
+4. **Class Length**: Maximum 200 lines per class
+5. **Import Organization**: Group imports (dart, flutter, packages, local)
+### Import Structure
+```dart
+// Dart imports
+import 'dart:async';
+
+// Flutter imports
+import 'package:flutter/material.dart';
+
+// Package imports
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+// Local core imports
+import '../../core/base/base_cubit.dart';
+import '../../core/widgets/app_button.dart';
+
+// Local feature imports
+import '../widgets/feature_widget.dart';
+```
+
+
+### Error Handling
+- **ALWAYS** use `BaseStateWidget` for error states
+- **ALWAYS** use `NetworkService` for api calls
+- **ALWAYS** use `FeatureRepository extends  NetworkService` for data operation
+
+
+
+### Performance Rules
+1. **Use `const` constructors whenever possible**
+2. **Extract heavy widgets to separate files**
+3. **Use `BaseStateWidget` for efficient state management**
+4. **Implement proper dispose methods**
+
+
+
+### Documentation Rules
+1. **Document all public methods**
+2. **Use meaningful variable names**
+3. **Add comments for complex logic**
+4. **Follow Dart documentation standards**
+
+## Enforcement
+- **REJECT** any screen file exceeding 100 lines
+- **REJECT** any line exceeding 85 characters
+- **REJECT** any implementation not using core base classes
+- **REJECT** any domain layer implementation unless explicitly requested
+- **REQUIRE** proper widget extraction for complex screens
+- **REQUIRE** proper import organization

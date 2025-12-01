@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gap/gap.dart';
 import 'package:generative_ui_with_ecommerce/core/extentions/app_extentions.dart';
-import '../../providers/ai_chat_providers.dart';
+import 'package:generative_ui_with_ecommerce/core/theme/app_color.dart';
+import '../providers/ai_chat_providers.dart' show aiChatProvider;
+import 'chat_history_drwer.dart';
 import 'chat_input_area.dart';
 import 'chat_message_list.dart';
 
@@ -80,8 +83,59 @@ class _DynamicChatWidgetState extends ConsumerState<DynamicChatWidget> {
             child: ChatMessageList(messages: messages, scrollController: _scrollController),
           ),
 
+          if (messages.where((m) => m.isUser && !m.isLoading).toList().length >= 12)
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primary10,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.iconColor),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: AppColors.primaryColor, size: 20),
+                  const Gap(12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Chat limit reached',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const Gap(4),
+                        Text(
+                          'You\'ve reached the maximum of 3 messages. Start a new chat to continue.',
+                          style: context.textTheme.bodySmall?.copyWith(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Gap(8),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      ref.read(aiChatProvider.notifier).clearChat();
+                    },
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('New Chat'),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           // Input Area
           ChatInputArea(
+            isChatLimitReached:
+                messages.where((m) => m.isUser && !m.isLoading).toList().length >= 12,
             controller: _messageController,
             focusNode: _focusNode,
             onSend: _sendMessage,
@@ -121,6 +175,73 @@ class _DynamicChatWidgetState extends ConsumerState<DynamicChatWidget> {
       ),
       child: Row(
         children: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.black),
+            tooltip: 'More options',
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'new',
+                child: Row(
+                  children: [
+                    Icon(Icons.add, color: AppColors.primary400),
+                    SizedBox(width: 12),
+                    Text('New Chat', style: context.textTheme.bodyMedium),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'history',
+                child: Row(
+                  children: [
+                    Icon(Icons.history, color: AppColors.primary400),
+                    SizedBox(width: 12),
+                    Text('Chat History', style: context.textTheme.bodyMedium),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'clear',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_outline, color: Colors.red),
+                    SizedBox(width: 12),
+                    Text('Clear Chat', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+            onSelected: (value) {
+              switch (value) {
+                case 'new':
+                  ref.read(aiChatProvider.notifier).clearChat();
+                  break;
+                case 'history':
+                  showGeneralDialog(
+                    context: context,
+                    barrierColor: Colors.transparent,
+                    transitionDuration: const Duration(milliseconds: 200),
+                    pageBuilder: (_, __, ___) => ChatHistoryMenu(
+                      onSessionChanged: () {
+                        setState(() {});
+                      },
+                    ),
+                    transitionBuilder: (_, anim, __, child) {
+                      return SlideTransition(
+                        position: Tween(
+                          begin: const Offset(0.1, -0.05),
+                          end: Offset.zero,
+                        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+                        child: FadeTransition(opacity: anim, child: child),
+                      );
+                    },
+                  );
+                  break;
+                case 'clear':
+                  ref.read(aiChatProvider.notifier).clearChat();
+                  break;
+              }
+            },
+          ),
           const Text('AI Assistant', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           const Spacer(),
           IconButton(

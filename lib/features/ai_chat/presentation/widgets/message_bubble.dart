@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:generative_ui_with_ecommerce/core/theme/app_color.dart';
-import '../data/models/chat_message.dart';
-import 'chat_data_display_new.dart';
+import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/message_content.dart'
+    show MessageContentWidget;
+import '../../data/models/chat_message.dart';
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
@@ -59,59 +60,10 @@ class MessageBubble extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (message.data != null) ...[
-                  if (message.text.isNotEmpty) const SizedBox(height: 12),
-                  ChatDataDisplay(data: message.data!),
-                ],
-
-                // Loading indicator
-                if (message.isLoading) ...[
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        isUser ? Colors.black : theme.primaryColor,
-                      ),
-                    ),
-                  ),
-                ],
-
-                // Error indicator
-                if (message.isError) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 16,
-                        color: isUser ? Colors.white70 : theme.colorScheme.error,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Error occurred',
-                        style: TextStyle(
-                          color: isUser ? Colors.white70 : theme.colorScheme.error,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                MessageContentWidget(isUser: isUser, message: message),
               ],
             ),
           ),
-
-          // if (isUser) ...[
-          //   const SizedBox(width: 8),
-          //   CircleAvatar(
-          //     radius: 16,
-          //     backgroundColor: theme.primaryColor.withOpacity(0.2),
-          //     child: Icon(Icons.person, size: 16, color: theme.primaryColor),
-          //   ),
-          // ],
         ],
       ),
     );

@@ -1,5 +1,6 @@
-/// Converter to use Ollama-style Tool definitions with Gemini API
-/// This allows you to define tools once and use them with different LLM providers
+/// Converter to use Ollama-style Tool definitions with Gemini API.
+/// This allows you to define tools once and use them with different LLM providers.
+library;
 
 /// Ollama-style tool definition (simplified version)
 class Tool {
@@ -68,40 +69,12 @@ class ToolFunction {
   final String description;
   final Map<String, dynamic> parameters;
 
-  const ToolFunction({
-    required this.name,
-    required this.description,
-    required this.parameters,
-  });
+  const ToolFunction({required this.name, required this.description, required this.parameters});
 }
 
 /// Helper to convert multiple Ollama tools to Gemini format
 List<Map<String, dynamic>> convertToolsToGemini(List<Tool> tools) {
   return [
-    <String, dynamic>{
-      'functionDeclarations': tools.map((tool) => tool.toGemini()).toList(),
-    },
+    <String, dynamic>{'functionDeclarations': tools.map((tool) => tool.toGemini()).toList()},
   ];
 }
-
-/// Example usage:
-/// ```dart
-/// final ollamaTool = Tool(
-///   function: ToolFunction(
-///     name: 'get_account_info',
-///     description: 'Get account info',
-///     parameters: {
-///       'type': 'object',
-///       'properties': {
-///         'accountType': {
-///           'type': 'string',
-///           'description': 'Account type'
-///         }
-///       }
-///     }
-///   )
-/// );
-///
-/// // Convert to Gemini format
-/// final geminiTools = convertToolsToGemini([ollamaTool]);
-/// ```

@@ -4,6 +4,9 @@ import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/produc
 class RecommendationData extends BaseModel {
   final List<ProductModel> products;
   final String type;
+  RecommendationData copyWith({List<ProductModel>? products, String? type}) {
+    return RecommendationData(products: products ?? this.products, type: type ?? this.type);
+  }
 
   RecommendationData({required this.products, required this.type});
 
@@ -12,7 +15,7 @@ class RecommendationData extends BaseModel {
         .map((item) => ProductModel.fromJson(item))
         .toList();
 
-    return RecommendationData(products: products, type: json['type']);
+    return RecommendationData(products: products, type: json['recommendationType'] ?? '');
   }
 
   @override

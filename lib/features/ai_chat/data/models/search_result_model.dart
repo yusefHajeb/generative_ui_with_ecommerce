@@ -24,7 +24,38 @@ class SearchCriteria {
     this.onSale,
     this.sortBy,
     this.limit,
-  });
+  }) {
+    if (minPrice != null && maxPrice != null && minPrice! > maxPrice!) {
+      throw ArgumentError('minPrice ($minPrice) cannot be greater than maxPrice ($maxPrice)');
+    }
+
+    if (minPrice != null && minPrice! < 0) {
+      throw ArgumentError('minPrice ($minPrice) cannot be negative');
+    }
+
+    // Validate maxPrice is non-negative
+    if (maxPrice != null && maxPrice! < 0) {
+      throw ArgumentError('maxPrice ($maxPrice) cannot be negative');
+    }
+
+    // Validate rating range (0-5)
+    if (minRating != null && (minRating! < 0 || minRating! > 5)) {
+      throw ArgumentError('minRating ($minRating) must be between 0 and 5');
+    }
+
+    // Validate limit is positive
+    if (limit != null && limit! <= 0) {
+      throw ArgumentError('limit ($limit) must be greater than 0');
+    }
+
+    // Validate sortBy values
+    if (sortBy != null) {
+      const validSortOptions = ['price_low', 'price_high', 'rating', 'popular', 'newest'];
+      if (!validSortOptions.contains(sortBy)) {
+        throw ArgumentError('sortBy ($sortBy) must be one of: ${validSortOptions.join(", ")}');
+      }
+    }
+  }
 
   factory SearchCriteria.fromJson(Map<String, dynamic> json) {
     return SearchCriteria(
@@ -40,6 +71,43 @@ class SearchCriteria {
       limit: json['limit'] as int?,
     );
   }
+
+  /// Validates the search criteria and returns a list of validation errors.
+  /// Returns an empty list if all validations pass.
+  List<String> validate() {
+    final errors = <String>[];
+
+    if (minPrice != null && maxPrice != null && minPrice! > maxPrice!) {
+      errors.add('minPrice cannot be greater than maxPrice');
+    }
+
+    if (minPrice != null && minPrice! < 0) {
+      errors.add('minPrice cannot be negative');
+    }
+
+    if (maxPrice != null && maxPrice! < 0) {
+      errors.add('maxPrice cannot be negative');
+    }
+
+    if (minRating != null && (minRating! < 0 || minRating! > 5)) {
+      errors.add('minRating must be between 0 and 5');
+    }
+
+    if (limit != null && limit! <= 0) {
+      errors.add('limit must be greater than 0');
+    }
+
+    if (sortBy != null) {
+      const validSortOptions = ['price_low', 'price_high', 'rating', 'popular', 'newest'];
+      if (!validSortOptions.contains(sortBy)) {
+        errors.add('sortBy must be one of: ${validSortOptions.join(", ")}');
+      }
+    }
+
+    return errors;
+  }
+
+  bool get isValid => validate().isEmpty;
 
   Map<String, dynamic> toJson() {
     return {

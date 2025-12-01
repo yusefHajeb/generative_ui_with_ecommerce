@@ -1,11 +1,11 @@
-  import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
+import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
 
 import '../../../../../core/network/base_model.dart';
-import '../../../data/models/category_model.dart';
-import '../../../data/models/cart_model.dart';
-import '../../../data/models/search_result_model.dart';
-import '../../../data/models/knowledge_model.dart';
-import '../../../data/models/recommendations_data.dart';
+import 'cart_model.dart';
+import 'category_model.dart';
+import 'knowledge_model.dart';
+import 'recommendations_data.dart';
+import 'search_result_model.dart';
 
 class ChatMessage extends BaseModel {
   final String text;
@@ -131,6 +131,13 @@ class ChatMessageData extends BaseModel {
   KnowledgeData? get asKnowledge {
     if (type == 'knowledge' && content is Map<String, dynamic>) {
       return KnowledgeData.fromJson(content);
+    }
+    return null;
+  }
+
+  String? get pageName {
+    if (type == 'navigation' && content is String) {
+      return content;
     }
     return null;
   }

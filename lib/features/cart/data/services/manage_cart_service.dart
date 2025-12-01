@@ -1,8 +1,6 @@
 import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/ai_response.dart';
-import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
 import 'package:generative_ui_with_ecommerce/features/cart/data/repositories/cart_repository.dart';
 
-/// Service for managing cart operations in AI chat context
 class ManageCartService {
   final CartRepository _cartRepository;
 
@@ -16,17 +14,7 @@ class ManageCartService {
       return cartResult.fold(
         (failure) => ErrorResponse(message: 'Failed to load cart: ${failure.message}'),
         (cart) {
-          final cartItems = cart.products.map((cartProduct) {
-            return {
-              'id': cartProduct.id,
-              'title': cartProduct.title,
-              'price': cartProduct.price,
-              'quantity': cartProduct.quantity,
-              'total': cartProduct.total,
-              'thumbnail': cartProduct.thumbnail,
-            };
-          }).toList();
-
+          final cartItems = cart.products;
           return ToolCallResponse(
             tool: 'manage_cart',
             arguments: {'action': 'view'},
@@ -56,7 +44,7 @@ class ManageCartService {
   ) async {
     try {
       // Convert productData to ProductModel
-      final product = ProductModel.fromJson(productData);
+      final product = productData['product_details'];
 
       final result = await _cartRepository.addToCart(product, quantity);
 

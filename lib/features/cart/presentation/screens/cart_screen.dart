@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:generative_ui_with_ecommerce/core/constants/constantnts.dart';
+import 'package:generative_ui_with_ecommerce/core/extentions/app_extentions.dart';
 import 'package:generative_ui_with_ecommerce/core/widgets/base_provider_widget.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/dynamic_chat_widget.dart';
 import 'package:generative_ui_with_ecommerce/features/cart/data/models/cart_model.dart';
@@ -34,7 +35,7 @@ class CartScreen extends ConsumerWidget {
               onPressed: () => _showClearCartDialog(context, ref),
               icon: const Icon(Icons.clear_all),
               label: const Text('Clear'),
-              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.surface),
             ),
         ],
       ),
@@ -104,7 +105,10 @@ class CartScreen extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Clear Cart'),
-        content: const Text('Are you sure you want to remove all items from your cart?'),
+        content: Text(
+          'Are you sure you want to remove all items from your cart?',
+          style: context.textTheme.bodyMedium,
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
           TextButton(

@@ -1,59 +1,39 @@
-import 'dart:convert';
 import 'dart:developer';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:generative_ui_with_ecommerce/core/errors/failure.dart';
-import 'package:generative_ui_with_ecommerce/core/helper/shared_prefrence.dart';
 import 'package:generative_ui_with_ecommerce/core/network/dio_client.dart';
 import 'package:generative_ui_with_ecommerce/core/network/endpoints.dart';
-import 'package:generative_ui_with_ecommerce/core/network/network_service.dart';
 import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/product_model.dart';
+import 'package:generative_ui_with_ecommerce/features/cart/data/datasources/local/cart_local_data_source_impl.dart';
+import 'package:generative_ui_with_ecommerce/features/cart/data/datasources/local/i_cart_local_data_source.dart';
+import 'package:generative_ui_with_ecommerce/features/cart/data/datasources/remote/i_cart_remote_data_source.dart';
 import 'package:generative_ui_with_ecommerce/features/cart/data/models/cart_model.dart';
 
+import '../datasources/remote/cart_remote_data_source_impl.dart';
 import '../models/cart_product.dart';
 
 /// Repository for cart data operations
-class CartRepository extends NetworkService {
-  static const String _cartKey = 'cart_data';
+class CartRepository {
+  final ICartLocalDataSource localDataSource;
+  final ICartRemoteDataSource remoteDataSource;
 
-  CartRepository(super.apiClient);
+  CartRepository({required this.localDataSource, required this.remoteDataSource});
 
-  /// Get cart from local storage
   Future<Either<Failure, Cart>> getCart() async {
-    try {
-      final cartJson = await SharedPrefrenceHelper.getString(_cartKey);
-      if (cartJson == null) {
-        // Return empty cart
-        return Right(
-          Cart(
-            id: 1,
-            products: [],
-            total: 0.0,
-            discountedTotal: 0.0,
-            userId: 1,
-            totalProducts: 0,
-            totalQuantity: 0,
-          ),
-        );
-      }
-
-      final cartData = jsonDecode(cartJson) as Map<String, dynamic>;
-      final cart = Cart.fromJson(cartData);
-      return Right(cart);
-    } catch (e) {
-      return Left(CacheFailure(message: 'Failed to load cart: ${e.toString()}'));
-    }
-  }
-
-  /// Save cart to local storage
-  Future<Either<Failure, void>> saveCart(Cart cart) async {
-    try {
-      final cartJson = jsonEncode(cart.toJson());
-      await SharedPrefrenceHelper.setData(_cartKey, cartJson);
-      return const Right(null);
-    } catch (e) {
-      return Left(CacheFailure(message: 'Failed to save cart: ${e.toString()}'));
-    }
+    // Try to get from remote first
+    final remoteResult = await remoteDataSource.getCart(1); // Assuming userId = 1 for now
+    return remoteResult.fold(
+      (failure) async {
+        log('Remote cart fetch failed, falling back to local: ${failure.message}');
+        return await localDataSource.getCart();
+      },
+      (cart) async {
+        // If remote succeeds, sync with local
+        await localDataSource.saveCart(cart);
+        return Right(cart);
+      },
+    );
   }
 
   /// Add product to cart
@@ -62,12 +42,20 @@ class CartRepository extends NetworkService {
       final cartResult = await getCart();
       return cartResult.fold((failure) => Left(failure), (cart) async {
         final updatedCart = _addProductToCart(cart, product, quantity);
-        final saveResult = await saveCart(updatedCart);
-        return saveResult.fold((failure) => Left(failure), (_) => Right(updatedCart));
+
+        final remoteResult = await remoteDataSource.addToCart(cart.userId, product.id, quantity);
+        remoteResult.fold(
+          (failure) => log('Failed to sync add to remote: ${failure.message}'),
+          (remoteCart) => log('Successfully synced add to remote'),
+        );
+
+        // Always save locally
+        final localResult = await localDataSource.saveCart(updatedCart);
+        return localResult.fold((failure) => Left(failure), (_) => Right(updatedCart));
       });
     } catch (e) {
       log('error in repository');
-      return Left(CacheFailure(message: 'Failed to add product to cart: ٠٠${e.toString()}'));
+      return Left(CacheFailure(message: 'Failed to add product to cart: ${e.toString()}'));
     }
   }
 
@@ -77,8 +65,20 @@ class CartRepository extends NetworkService {
       final cartResult = await getCart();
       return cartResult.fold((failure) => Left(failure), (cart) async {
         final updatedCart = _updateProductQuantity(cart, productId, quantity);
-        final saveResult = await saveCart(updatedCart);
-        return saveResult.fold((failure) => Left(failure), (_) => Right(updatedCart));
+
+        final remoteResult = await remoteDataSource.updateQuantity(
+          cart.userId,
+          productId,
+          quantity,
+        );
+        remoteResult.fold(
+          (failure) => log('Failed to sync update to remote: ${failure.message}'),
+          (remoteCart) => log('Successfully synced update to remote'),
+        );
+
+        // Always save locally
+        final localResult = await localDataSource.saveCart(updatedCart);
+        return localResult.fold((failure) => Left(failure), (_) => Right(updatedCart));
       });
     } catch (e) {
       return Left(CacheFailure(message: 'Failed to update product quantity: ${e.toString()}'));
@@ -91,8 +91,16 @@ class CartRepository extends NetworkService {
       final cartResult = await getCart();
       return cartResult.fold((failure) => Left(failure), (cart) async {
         final updatedCart = _removeProductFromCart(cart, productId);
-        final saveResult = await saveCart(updatedCart);
-        return saveResult.fold((failure) => Left(failure), (_) => Right(updatedCart));
+
+        final remoteResult = await remoteDataSource.removeFromCart(cart.userId, productId);
+        remoteResult.fold(
+          (failure) => log('Failed to sync remove to remote: ${failure.message}'),
+          (remoteCart) => log('Successfully synced remove to remote'),
+        );
+
+        // Always save locally
+        final localResult = await localDataSource.saveCart(updatedCart);
+        return localResult.fold((failure) => Left(failure), (_) => Right(updatedCart));
       });
     } catch (e) {
       return Left(CacheFailure(message: 'Failed to remove product from cart: ${e.toString()}'));
@@ -111,10 +119,34 @@ class CartRepository extends NetworkService {
         totalProducts: 0,
         totalQuantity: 0,
       );
-      final saveResult = await saveCart(emptyCart);
-      return saveResult.fold((failure) => Left(failure), (_) => Right(emptyCart));
+
+      final remoteResult = await remoteDataSource.clearCart(1);
+      remoteResult.fold(
+        (failure) => log('Failed to sync clear to remote: ${failure.message}'),
+        (remoteCart) => log('Successfully synced clear to remote'),
+      );
+
+      // Always clear locally
+      final localResult = await localDataSource.saveCart(emptyCart);
+      return localResult.fold((failure) => Left(failure), (_) => Right(emptyCart));
     } catch (e) {
       return Left(CacheFailure(message: 'Failed to clear cart: ${e.toString()}'));
+    }
+  }
+
+  Future<Either<Failure, Cart>> syncCartWithRemote() async {
+    try {
+      final localCartResult = await localDataSource.getCart();
+      return localCartResult.fold((failure) => Left(failure), (localCart) async {
+        final remoteResult = await remoteDataSource.syncCart(localCart);
+        return remoteResult.fold((failure) => Left(failure), (syncedCart) async {
+          // Update local with synced data
+          await localDataSource.saveCart(syncedCart);
+          return Right(syncedCart);
+        });
+      });
+    } catch (e) {
+      return Left(ServerFailure('Failed to sync cart with remote: ${e.toString()}'));
     }
   }
 
@@ -136,18 +168,6 @@ class CartRepository extends NetworkService {
         discountedTotal:
             (existingProduct.price * newQuantity) * (1 - existingProduct.discountPercentage / 100),
       );
-
-      CartProduct(
-        id: existingProduct.id,
-        title: existingProduct.title,
-        price: existingProduct.price,
-        quantity: newQuantity,
-        total: existingProduct.price * newQuantity,
-        discountPercentage: existingProduct.discountPercentage,
-        discountedTotal:
-            (existingProduct.price * newQuantity) * (1 - existingProduct.discountPercentage / 100),
-        thumbnail: existingProduct.thumbnail,
-      );
     } else {
       // Add new product
       final newCartProduct = CartProduct(
@@ -156,7 +176,7 @@ class CartRepository extends NetworkService {
         price: product.price,
         quantity: quantity,
         total: product.price * quantity,
-        discountPercentage: product.discountPercentage, // No discount for now
+        discountPercentage: product.discountPercentage,
         discountedTotal: product.price * quantity,
         thumbnail: product.thumbnail,
       );
@@ -244,18 +264,9 @@ class CartRepository extends NetworkService {
       totalQuantity: totalQuantity,
     );
   }
-
-  Future<Either<Failure, Cart>> getCartFromRemote() async {
-    return Left(ServerFailure('Remote cart fetching not implemented yet'));
-  }
-
-  Future<Either<Failure, Cart>> syncCartWithRemote(Cart localCart) async {
-    return Left(ServerFailure('Cart synchronization not implemented yet'));
-  }
 }
 
 final cartRepositoryProvider = Provider<CartRepository>((ref) {
-  // For now, using a basic API client. In future, can use specific cart API client
   final apiClient = DioClientFactory.createApiClient(
     baseUrl: ApiEndpoints.baseUrl,
     enableLogging: true,
@@ -263,5 +274,9 @@ final cartRepositoryProvider = Provider<CartRepository>((ref) {
     enableRetry: true,
     enableCache: false,
   );
-  return CartRepository(apiClient);
+
+  final localDataSource = CartLocalDataSourceImpl();
+  final remoteDataSource = CartRemoteDataSourceImpl(apiClient);
+
+  return CartRepository(localDataSource: localDataSource, remoteDataSource: remoteDataSource);
 });

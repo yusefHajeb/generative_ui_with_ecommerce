@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../presentation/data/models/chat_message.dart';
+import '../data/models/chat_message.dart';
 
 class ChatHistoryService {
   static const String _chatSessionsKey = 'chat_sessions';
