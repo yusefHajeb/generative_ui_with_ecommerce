@@ -54,10 +54,10 @@ abstract class NetworkService {
 
   /// Handles API requests that return a list of BaseModel instances.
   /// Returns Either<Failure, List<T>> where T extends BaseModel.
-  Future<Either<Failure, List<T>>> handleListApiRequests<T extends BaseModel>({
+  Future<Either<Failure, List<T>>> handleListApiRequests<T>({
     required HttpMethod httpMethod,
     required String endPoint,
-    required T Function(Map<String, dynamic>) fromJson,
+    required T Function(dynamic) fromJson,
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,

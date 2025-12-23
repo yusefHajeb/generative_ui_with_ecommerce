@@ -1,0 +1,224 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gap/gap.dart';
+import 'package:generative_ui_with_ecommerce/core/extentions/app_extentions.dart';
+import 'package:generative_ui_with_ecommerce/core/theme/app_color.dart';
+import 'package:generative_ui_with_ecommerce/features/ai_chat/data/models/knowledge_model.dart';
+import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/about_widget.dart';
+import 'package:generative_ui_with_ecommerce/features/ai_chat/presentation/widgets/help_card.dart';
+
+import '../../data/models/chat_message.dart';
+
+class KnowledgeWidget extends ConsumerWidget {
+  final ChatMessageData chatMessageData;
+  const KnowledgeWidget({super.key, required this.chatMessageData});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final knowledgeData = chatMessageData.asKnowledge!;
+    final topic = knowledgeData.title;
+    if (knowledgeData.title == 'ShopAI Assistant') {
+      return AboutWidget(knowledgeData: knowledgeData);
+    } else if (topic == 'What I Can Do') {
+      return _buildCapabilitiesCard(context, knowledgeData);
+    } else if (topic == 'How to Shop with Me') {
+      return HelpCard(knowledge: knowledgeData);
+    } else {
+      return _buildGenericKnowledgeCard(context, knowledgeData);
+    }
+  }
+
+  Widget _buildCapabilitiesCard(BuildContext context, KnowledgeData knowledgeData) {
+    final features = knowledgeData.features;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary50.withOpacity(0.9),
+            AppColors.primary100.withOpacity(0.7),
+            AppColors.primary200.withOpacity(0.5),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary400.withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+        border: Border.all(color: AppColors.primary300.withOpacity(0.4), width: 1.5),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Enhanced header with icon
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary400.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.primary500.withOpacity(0.3)),
+                ),
+                child: Icon(Icons.lightbulb_outline_rounded, color: AppColors.primary500, size: 24),
+              ),
+              const Gap(12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      knowledgeData.title,
+                      style: TextStyle(
+                        color: AppColors.primary500,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    if (knowledgeData.tagline != null) ...[
+                      const Gap(4),
+                      Text(
+                        knowledgeData.tagline!,
+                        style: TextStyle(
+                          color: AppColors.primary400,
+                          fontSize: 14,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const Gap(20),
+          if (features != null)
+            ...features.map(
+              (feature) => Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.primary200.withOpacity(0.4)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary400.withOpacity(0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.primary300.withOpacity(0.3),
+                            AppColors.primary400.withOpacity(0.4),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.primary500.withOpacity(0.2)),
+                      ),
+                      child: Center(
+                        child: Text(feature.icon, style: const TextStyle(fontSize: 22)),
+                      ),
+                    ),
+                    const Gap(16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            feature.name,
+                            style: TextStyle(
+                              color: AppColors.primary500,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const Gap(6),
+                          Text(
+                            feature.description,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.primary400,
+                              height: 1.5,
+                              letterSpacing: 0.1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGenericKnowledgeCard(BuildContext context, KnowledgeData knowledgeData) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            knowledgeData.title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const Gap(12),
+
+          if (knowledgeData.features != null)
+            ...(knowledgeData.features)!.map(
+              (e) => Container(
+                margin: EdgeInsets.only(bottom: 10),
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green[400]?.withOpacity(0.3),
+                  border: Border.all(color: Colors.grey[400]!, width: 0.5),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(e.name, style: TextStyle(fontSize: 14)),
+                        Text(e.icon),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    Text(e.description, style: context.textTheme.bodySmall),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

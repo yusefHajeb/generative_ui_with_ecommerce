@@ -30,7 +30,6 @@ class AppTextTheme {
   );
   static TextStyle bodySmall = baseTextStyle.copyWith(fontSize: 12);
   static TextStyle bodyLarge = baseTextStyle.copyWith(
-    color: AppColors.white,
     fontSize: 20,
     fontFamily: defaultFontFamily,
     fontWeight: FontWeight.w400,

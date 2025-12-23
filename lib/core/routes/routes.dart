@@ -6,5 +6,6 @@ class AppRoutes {
   static const String orderConfirmation = '/order-confirmation';
   static const String userProfile = '/user-profile';
   static const String chatScreen = '/chat_screen';
+  static const String search = '/search';
+  static const String products = '/products';
 }
-

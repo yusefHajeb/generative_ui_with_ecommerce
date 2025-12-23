@@ -5,9 +5,11 @@ class IconWidget extends StatelessWidget {
   final bool isHaveBackgroundColor;
   Color? backgroundColor;
   EdgeInsetsGeometry padding;
+  double? radius;
 
   final Widget icon;
   IconWidget({
+    this.radius = 30,
     super.key,
     required this.isHaveBackgroundColor,
     required this.icon,
@@ -21,7 +23,7 @@ class IconWidget extends StatelessWidget {
       padding: padding,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.all(Radius.circular(30)),
+        borderRadius: BorderRadius.all(Radius.circular(radius ?? 30)),
         color: backgroundColor,
       ),
       child: icon,
